@@ -1,0 +1,343 @@
+package outrights
+
+import (
+	"math"
+	"sort"
+)
+
+// ProcessEventsFile processes a JSON file containing events and returns simulation results
+func ProcessEventsFile(events []Event) SimulationResult {
+	// Extract team names from events
+	teamNamesMap := make(map[string]bool)
+	for _, event := range events {
+		homeTeam, awayTeam := parseEventName(event.Name)
+		if homeTeam != "" && awayTeam != "" {
+			teamNamesMap[homeTeam] = true
+			teamNamesMap[awayTeam] = true
+		}
+	}
+	
+	teamNames := make([]string, 0, len(teamNamesMap))
+	for name := range teamNamesMap {
+		teamNames = append(teamNames, name)
+	}
+	
+	// Split events into training and prediction sets
+	trainingCount := len(events) * 30 / 100  // 30% for training
+	trainingEvents := events[:trainingCount]
+	predictionEvents := events[trainingCount:]
+	
+	// Create simulation request
+	req := SimulationRequest{
+		Ratings:         make(map[string]float64),
+		TrainingSet:     trainingEvents,
+		Events:          predictionEvents,
+		Handicaps:       make(map[string]float64),
+		Markets:         []Market{{Name: "Winner", Payoff: createWinnerPayoff(len(teamNames)), Teams: teamNames}},
+		Rounds:          38,
+		MaxIterations:   500,
+		PopulationSize:  8,
+		MutationFactor:  0.1,
+		EliteRatio:      0.2,
+		InitStd:         0.2,
+		LogInterval:     10,
+		DecayExponent:   2.0,
+		MutationProbability: 0.1,
+		ExplorationInterval: 50,
+		NExplorationPoints: 5,
+		ExcellentError:  0.01,
+		MaxError:        1.0,
+		NPaths:          1000,
+	}
+	
+	// Initialize ratings to 1.0 for all teams
+	for _, name := range teamNames {
+		req.Ratings[name] = 1.0
+	}
+	
+	return ProcessSimulation(req)
+}
+
+// ProcessSimulation processes a simulation request and returns results
+func ProcessSimulation(req SimulationRequest) SimulationResult {
+	teamNames := make([]string, 0, len(req.Ratings))
+	for name := range req.Ratings {
+		teamNames = append(teamNames, name)
+	}
+	sort.Strings(teamNames)
+	
+	// Initialize markets
+	initMarkets(teamNames, req.Markets)
+	
+	// Calculate league table and remaining fixtures
+	leagueTable := calcLeagueTable(teamNames, req.Events, req.Handicaps)
+	remainingFixtures := calcRemainingFixtures(teamNames, req.Events, req.Rounds)
+	
+	// Solve for ratings
+	solver := newRatingsSolver()
+	
+	// Create options map
+	options := map[string]interface{}{
+		"max_iterations":         req.MaxIterations,
+		"population_size":        req.PopulationSize,
+		"mutation_factor":        req.MutationFactor,
+		"elite_ratio":            req.EliteRatio,
+		"init_std":               req.InitStd,
+		"log_interval":           req.LogInterval,
+		"decay_exponent":         req.DecayExponent,
+		"mutation_probability":   req.MutationProbability,
+		"exploration_interval":   req.ExplorationInterval,
+		"n_exploration_points":   req.NExplorationPoints,
+		"excellent_error":        req.ExcellentError,
+		"max_error":              req.MaxError,
+	}
+	
+	// Solve for ratings using training data
+	solverResp := solver.solve(req.TrainingSet, req.Ratings, req.Events, options)
+	
+	// Extract results
+	poissonRatings := solverResp["ratings"].(map[string]float64)
+	homeAdvantage := solverResp["home_advantage"].(float64)
+	solverError := solverResp["error"].(float64)
+	
+	// Run simulation
+	simPoints := newSimPoints(leagueTable, req.NPaths)
+	
+	for _, eventName := range remainingFixtures {
+		simPoints.simulate(eventName, poissonRatings, homeAdvantage)
+	}
+	
+	// Calculate position probabilities
+	positionProbs := calcPositionProbabilities(simPoints, req.Markets)
+	
+	// Calculate PPG ratings and expected points
+	ppgRatings := calcPPGRatings(teamNames, poissonRatings, homeAdvantage)
+	expectedPoints := calcExpectedSeasonPoints(teamNames, req.Events, req.Handicaps, remainingFixtures, poissonRatings, homeAdvantage)
+	
+	// Update league table with ratings and expected points
+	for i := range leagueTable {
+		if ppgRating, exists := ppgRatings[leagueTable[i].Name]; exists {
+			leagueTable[i].PointsPerGameRating = ppgRating
+		}
+		if expPoints, exists := expectedPoints[leagueTable[i].Name]; exists {
+			leagueTable[i].ExpectedSeasonPoints = expPoints
+		}
+		if poissonRating, exists := poissonRatings[leagueTable[i].Name]; exists {
+			leagueTable[i].PoissonRating = poissonRating
+		}
+		
+		// Calculate training errors
+		trainingErrors := calcTrainingErrors(teamNames, req.TrainingSet, poissonRatings, homeAdvantage)
+		if errors, exists := trainingErrors[leagueTable[i].Name]; exists {
+			leagueTable[i].TrainingEvents = len(errors)
+			leagueTable[i].MeanTrainingError = mean(errors)
+			leagueTable[i].StdTrainingError = stdDeviation(errors)
+		}
+	}
+	
+	// Sort teams by PPG rating
+	sort.Slice(leagueTable, func(i, j int) bool {
+		return leagueTable[i].PointsPerGameRating > leagueTable[j].PointsPerGameRating
+	})
+	
+	// Calculate outright marks
+	outrightMarks := calcOutrightMarks(positionProbs, req.Markets)
+	
+	return SimulationResult{
+		Teams:         leagueTable,
+		OutrightMarks: outrightMarks,
+		HomeAdvantage: homeAdvantage,
+		SolverError:   solverError,
+	}
+}
+
+// Helper functions that were in main.go
+func createWinnerPayoff(numTeams int) []float64 {
+	payoff := make([]float64, numTeams)
+	payoff[0] = 1.0  // Winner gets payoff of 1
+	// All other positions get payoff of 0 (already initialized)
+	return payoff
+}
+
+func mean(x []float64) float64 {
+	if len(x) == 0 {
+		return 0
+	}
+	sum := 0.0
+	for _, v := range x {
+		sum += v
+	}
+	return sum / float64(len(x))
+}
+
+func variance(x []float64) float64 {
+	if len(x) == 0 {
+		return 0
+	}
+	m := mean(x)
+	sum := 0.0
+	for _, v := range x {
+		diff := v - m
+		sum += diff * diff
+	}
+	return sum
+}
+
+func stdDeviation(x []float64) float64 {
+	return math.Sqrt(variance(x))
+}
+
+func calcTrainingErrors(teamNames []string, events []Event, ratings map[string]float64, homeAdvantage float64) map[string][]float64 {
+	errors := make(map[string][]float64)
+	
+	// Initialize error slices
+	for _, name := range teamNames {
+		errors[name] = make([]float64, 0)
+	}
+	
+	for _, event := range events {
+		homeTeam, awayTeam := parseEventName(event.Name)
+		if homeTeam == "" || awayTeam == "" {
+			continue
+		}
+		
+		matrix := newScoreMatrix(event.Name, ratings, homeAdvantage)
+		marketProbs := extractMarketProbabilities(event)
+		
+		// Calculate expected points from market probabilities
+		expectedHomePoints := 3*marketProbs[0] + marketProbs[1]
+		expectedAwayPoints := 3*marketProbs[2] + marketProbs[1]
+		
+		// Calculate actual points from model
+		actualHomePoints := matrix.expectedHomePoints()
+		actualAwayPoints := matrix.expectedAwayPoints()
+		
+		// Calculate errors
+		homeError := math.Abs(actualHomePoints - expectedHomePoints)
+		awayError := math.Abs(actualAwayPoints - expectedAwayPoints)
+		
+		errors[homeTeam] = append(errors[homeTeam], homeError)
+		errors[awayTeam] = append(errors[awayTeam], awayError)
+	}
+	
+	return errors
+}
+
+func calcPPGRatings(teamNames []string, ratings map[string]float64, homeAdvantage float64) map[string]float64 {
+	ppgRatings := make(map[string]float64)
+	
+	// Initialize all teams to 0
+	for _, name := range teamNames {
+		ppgRatings[name] = 0.0
+	}
+	
+	// Calculate expected points per game for each team
+	for _, homeTeam := range teamNames {
+		for _, awayTeam := range teamNames {
+			if homeTeam != awayTeam {
+				eventName := homeTeam + " vs " + awayTeam
+				matrix := newScoreMatrix(eventName, ratings, homeAdvantage)
+				
+				ppgRatings[homeTeam] += matrix.expectedHomePoints()
+				ppgRatings[awayTeam] += matrix.expectedAwayPoints()
+			}
+		}
+	}
+	
+	// Normalize by number of games (each team plays n-1 home and n-1 away games)
+	numGames := float64(len(teamNames) - 1)
+	for name := range ppgRatings {
+		ppgRatings[name] = ppgRatings[name] / numGames
+	}
+	
+	return ppgRatings
+}
+
+func calcExpectedSeasonPoints(teamNames []string, events []Event, handicaps map[string]float64, 
+	remainingFixtures []string, ratings map[string]float64, homeAdvantage float64) map[string]float64 {
+	
+	// Start with current league table points
+	leagueTable := calcLeagueTable(teamNames, events, handicaps)
+	expPoints := make(map[string]float64)
+	
+	for _, team := range leagueTable {
+		expPoints[team.Name] = team.Points
+	}
+	
+	// Add expected points from remaining fixtures
+	for _, eventName := range remainingFixtures {
+		matrix := newScoreMatrix(eventName, ratings, homeAdvantage)
+		homeTeam, awayTeam := parseEventName(eventName)
+		
+		if homeTeam != "" && awayTeam != "" {
+			expPoints[homeTeam] += matrix.expectedHomePoints()
+			expPoints[awayTeam] += matrix.expectedAwayPoints()
+		}
+	}
+	
+	return expPoints
+}
+
+func calcPositionProbabilities(simPoints *SimPoints, markets []Market) map[string]map[string][]float64 {
+	positionProbs := make(map[string]map[string][]float64)
+	
+	// Default probabilities for all teams
+	positionProbs["default"] = simPoints.positionProbabilities(nil)
+	
+	// Market-specific probabilities
+	for _, market := range markets {
+		if len(market.Teams) > 0 {
+			positionProbs[market.Name] = simPoints.positionProbabilities(market.Teams)
+		}
+	}
+	
+	return positionProbs
+}
+
+func sumProduct(x, y []float64) float64 {
+	if len(x) != len(y) {
+		return 0
+	}
+	
+	sum := 0.0
+	for i := range x {
+		sum += x[i] * y[i]
+	}
+	return sum
+}
+
+func calcOutrightMarks(positionProbabilities map[string]map[string][]float64, markets []Market) []OutrightMark {
+	var marks []OutrightMark
+	
+	for _, market := range markets {
+		groupKey := "default"
+		if len(market.Teams) > 0 {
+			groupKey = market.Name
+		}
+		
+		if groupProbs, exists := positionProbabilities[groupKey]; exists {
+			for _, teamName := range market.Teams {
+				if teamProbs, exists := groupProbs[teamName]; exists {
+					markValue := sumProduct(teamProbs, market.Payoff)
+					marks = append(marks, OutrightMark{
+						Market: market.Name,
+						Team:   teamName,
+						Mark:   markValue,
+					})
+				}
+			}
+		}
+	}
+	
+	return marks
+}
+
+func initMarkets(teamNames []string, markets []Market) {
+	for i := range markets {
+		if len(markets[i].Teams) == 0 {
+			// If no teams specified, use all teams
+			markets[i].Teams = make([]string, len(teamNames))
+			copy(markets[i].Teams, teamNames)
+		}
+	}
+}
