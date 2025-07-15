@@ -6,7 +6,7 @@ import (
 )
 
 // ProcessEventsFile processes a JSON file containing events and returns simulation results
-func ProcessEventsFile(events []Event) SimulationResult {
+func ProcessEventsFile(events []Event, generations int) SimulationResult {
 	// Extract team names from events
 	teamNamesMap := make(map[string]bool)
 	for _, event := range events {
@@ -34,10 +34,10 @@ func ProcessEventsFile(events []Event) SimulationResult {
 		Events:          predictionEvents,
 		Handicaps:       make(map[string]float64),
 		Markets:         []Market{{Name: "Winner", Payoff: createWinnerPayoff(len(teamNames)), Teams: teamNames}},
-		Rounds:          38,
+		Rounds:          2 * (len(teamNames) - 1),
 		PopulationSize:  8,
 		MutationFactor:  0.1,
-		EliteRatio:      0.2,
+		EliteRatio:      0.1,
 		InitStd:         0.2,
 		LogInterval:     10,
 		DecayExponent:   2.0,
@@ -52,11 +52,11 @@ func ProcessEventsFile(events []Event) SimulationResult {
 		req.Ratings[name] = 1.0
 	}
 	
-	return ProcessSimulation(req)
+	return ProcessSimulation(req, generations)
 }
 
 // ProcessSimulation processes a simulation request and returns results
-func ProcessSimulation(req SimulationRequest) SimulationResult {
+func ProcessSimulation(req SimulationRequest, generations int) SimulationResult {
 	teamNames := make([]string, 0, len(req.Ratings))
 	for name := range req.Ratings {
 		teamNames = append(teamNames, name)
@@ -84,6 +84,7 @@ func ProcessSimulation(req SimulationRequest) SimulationResult {
 		"mutation_probability":   req.MutationProbability,
 		"exploration_interval":   req.ExplorationInterval,
 		"n_exploration_points":   req.NExplorationPoints,
+		"generations":            generations,
 	}
 	
 	// Solve for ratings using training data
@@ -226,22 +227,25 @@ func calcPPGRatings(teamNames []string, ratings map[string]float64, homeAdvantag
 	}
 	
 	// Calculate expected points per game for each team
-	for _, homeTeam := range teamNames {
-		for _, awayTeam := range teamNames {
-			if homeTeam != awayTeam {
+	// Each team plays every other team once at home and once away
+	for i, homeTeam := range teamNames {
+		for j, awayTeam := range teamNames {
+			if i != j {
 				eventName := homeTeam + " vs " + awayTeam
 				matrix := newScoreMatrix(eventName, ratings, homeAdvantage)
 				
+				// Add expected points for this specific game
 				ppgRatings[homeTeam] += matrix.expectedHomePoints()
 				ppgRatings[awayTeam] += matrix.expectedAwayPoints()
 			}
 		}
 	}
 	
-	// Normalize by number of games (each team plays n-1 home and n-1 away games)
-	numGames := float64(len(teamNames) - 1)
+	// Normalize by total number of games each team plays
+	// Each team plays 2*(n-1) games total (n-1 home + n-1 away)
+	totalGames := float64(2 * (len(teamNames) - 1))
 	for name := range ppgRatings {
-		ppgRatings[name] = ppgRatings[name] / numGames
+		ppgRatings[name] = ppgRatings[name] / totalGames
 	}
 	
 	return ppgRatings

@@ -39,10 +39,10 @@ func (p Population) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
 
 func newGeneticAlgorithm(options map[string]interface{}) *GeneticAlgorithm {
 	ga := &GeneticAlgorithm{
-		maxIterations:       1000,
+		maxIterations:       getIntOption(options, "generations", 1000),
 		populationSize:      getIntOption(options, "population_size", 8),
 		mutationFactor:      getFloatOption(options, "mutation_factor", 0.1),
-		eliteRatio:          getFloatOption(options, "elite_ratio", 0.2),
+		eliteRatio:          getFloatOption(options, "elite_ratio", 0.1),
 		initStd:             getFloatOption(options, "init_std", 1.0),
 		logInterval:         getIntOption(options, "log_interval", 10),
 		decayExponent:       getFloatOption(options, "decay_exponent", 0.5),
@@ -321,7 +321,7 @@ func (rs *RatingsSolver) initializeRatingsFromLeagueTable(teamNames []string, ev
 }
 
 func (rs *RatingsSolver) solve(events []Event, ratings map[string]float64, results []Event, options map[string]interface{}) map[string]interface{} {
-	log.Printf("Starting solver with %d events, max_iterations=1000", len(events))
+	log.Printf("Starting solver with %d events, max_iterations=%d", len(events), getIntOption(options, "generations", 1000))
 	
 	// Initialize ratings from league table if results are provided
 	useLeagueTableInit := getBoolOption(options, "use_league_table_init", true)

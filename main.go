@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"log"
 	"os"
+	"strconv"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
@@ -23,7 +24,7 @@ func handleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
 		}, nil
 	}
 	
-	result := outrights.ProcessSimulation(req)
+	result := outrights.ProcessSimulation(req, 1000)
 	
 	responseBody, err := json.Marshal(result)
 	if err != nil {
@@ -45,10 +46,19 @@ func handleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
 
 func runCLI() {
 	if len(os.Args) < 2 {
-		log.Fatal("Usage: go run . <filename>")
+		log.Fatal("Usage: go run . <filename> [generations]")
 	}
 	
 	filename := os.Args[1]
+	generations := 1000 // default
+	
+	if len(os.Args) > 2 {
+		if g, err := strconv.Atoi(os.Args[2]); err == nil {
+			generations = g
+		} else {
+			log.Fatalf("Invalid generations: %s", os.Args[2])
+		}
+	}
 	
 	// Read and parse the JSON file
 	data, err := os.ReadFile(filename)
@@ -64,13 +74,13 @@ func runCLI() {
 	log.Printf("Processing %s with %d events", filename, len(events))
 	log.Println("Starting simulation...")
 	
-	result := outrights.ProcessEventsFile(events)
+	result := outrights.ProcessEventsFile(events, generations)
 	
 	log.Printf("Home advantage: %.4f, Solver error: %.6f", result.HomeAdvantage, result.SolverError)
 	log.Println()
 	log.Println("Teams (sorted by points per game rating):")
 	for _, team := range result.Teams {
-		log.Printf("- %s: %.1f pts, PPG rating: %.3f", team.Name, team.Points, team.PointsPerGameRating)
+		log.Printf("- %s: %.1f pts, PPG rating: %.3f, Poisson rating: %.3f", team.Name, team.Points, team.PointsPerGameRating, team.PoissonRating)
 	}
 	
 	log.Println()
