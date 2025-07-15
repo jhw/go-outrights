@@ -29,15 +29,9 @@ func calcLeagueTable(teamNames []string, events []Event, handicaps map[string]fl
 		homeTeam, awayTeam := parseEventName(event.Name)
 		
 		// Skip if we don't have match result data
-		if len(event.MatchOdds.Prices) == 0 {
+		if len(event.Score) != 2 {
 			continue
 		}
-		
-		// For now, we'll simulate a result based on the odds
-		// In a real implementation, you'd have actual match results
-		// This is a placeholder - you'd need actual match results
-		// For demonstration, we'll skip updating points from events
-		// as the Python version seems to work with odds data primarily
 		
 		// Ensure teams exist
 		if _, exists := teams[homeTeam]; !exists {
@@ -46,6 +40,26 @@ func calcLeagueTable(teamNames []string, events []Event, handicaps map[string]fl
 		if _, exists := teams[awayTeam]; !exists {
 			teams[awayTeam] = &Team{Name: awayTeam}
 		}
+		
+		homeGoals := event.Score[0]
+		awayGoals := event.Score[1]
+		
+		// Calculate points
+		if homeGoals > awayGoals {
+			// Home team wins
+			teams[homeTeam].Points += 3
+		} else if homeGoals < awayGoals {
+			// Away team wins
+			teams[awayTeam].Points += 3
+		} else {
+			// Draw
+			teams[homeTeam].Points += 1
+			teams[awayTeam].Points += 1
+		}
+		
+		// Update goal difference
+		teams[homeTeam].GoalDifference += homeGoals - awayGoals
+		teams[awayTeam].GoalDifference += awayGoals - homeGoals
 	}
 	
 	// Convert to slice and sort
@@ -68,9 +82,11 @@ func calcLeagueTable(teamNames []string, events []Event, handicaps map[string]fl
 func calcRemainingFixtures(teamNames []string, events []Event, rounds int) []string {
 	playedFixtures := make(map[string]bool)
 	
-	// Track already played fixtures
+	// Track already played fixtures (only those with scores)
 	for _, event := range events {
-		playedFixtures[event.Name] = true
+		if len(event.Score) == 2 {
+			playedFixtures[event.Name] = true
+		}
 	}
 	
 	var remainingFixtures []string

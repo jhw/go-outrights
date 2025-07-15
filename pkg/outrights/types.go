@@ -8,6 +8,7 @@ type MatchOdds struct {
 type Event struct {
 	Name      string    `json:"name"`
 	Date      string    `json:"date"`
+	Score     []int     `json:"score,omitempty"`
 	MatchOdds MatchOdds `json:"match_odds"`
 }
 
