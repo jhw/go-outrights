@@ -5,8 +5,27 @@ import (
 	"sort"
 )
 
+// ProcessEventsFileOptions holds optional configuration for ProcessEventsFile
+type ProcessEventsFileOptions struct {
+	Generations int
+	NPaths      int
+}
+
 // ProcessEventsFile processes a JSON file containing events and returns simulation results
-func ProcessEventsFile(events []Event, generations int) SimulationResult {
+func ProcessEventsFile(events []Event, opts ...ProcessEventsFileOptions) SimulationResult {
+	// Set defaults
+	generations := 1000
+	npaths := 5000
+	
+	// Override with provided options
+	if len(opts) > 0 {
+		if opts[0].Generations > 0 {
+			generations = opts[0].Generations
+		}
+		if opts[0].NPaths > 0 {
+			npaths = opts[0].NPaths
+		}
+	}
 	// Extract team names from events
 	teamNamesMap := make(map[string]bool)
 	for _, event := range events {
@@ -44,7 +63,7 @@ func ProcessEventsFile(events []Event, generations int) SimulationResult {
 		MutationProbability: 0.1,
 		ExplorationInterval: 50,
 		NExplorationPoints: 5,
-		NPaths:          1000,
+		NPaths:          npaths,
 	}
 	
 	// Initialize ratings to 1.0 for all teams

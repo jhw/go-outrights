@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
@@ -24,7 +25,7 @@ func handleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
 		}, nil
 	}
 	
-	result := outrights.ProcessSimulation(req, 1000)
+	result := outrights.ProcessSimulation(req, 1000) // explicit default for Lambda
 	
 	responseBody, err := json.Marshal(result)
 	if err != nil {
@@ -46,17 +47,30 @@ func handleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
 
 func runCLI() {
 	if len(os.Args) < 2 {
-		log.Fatal("Usage: go run . <filename> [generations]")
+		log.Fatal("Usage: go run . <filename> [--generations=N] [--npaths=N]")
 	}
 	
 	filename := os.Args[1]
-	generations := 1000 // default
+	generations := 0 // 0 means use default
+	npaths := 0      // 0 means use default
 	
-	if len(os.Args) > 2 {
-		if g, err := strconv.Atoi(os.Args[2]); err == nil {
-			generations = g
+	// Parse named arguments
+	for i := 2; i < len(os.Args); i++ {
+		arg := os.Args[i]
+		if strings.HasPrefix(arg, "--generations=") {
+			if g, err := strconv.Atoi(strings.TrimPrefix(arg, "--generations=")); err == nil {
+				generations = g
+			} else {
+				log.Fatalf("Invalid generations: %s", arg)
+			}
+		} else if strings.HasPrefix(arg, "--npaths=") {
+			if n, err := strconv.Atoi(strings.TrimPrefix(arg, "--npaths=")); err == nil {
+				npaths = n
+			} else {
+				log.Fatalf("Invalid npaths: %s", arg)
+			}
 		} else {
-			log.Fatalf("Invalid generations: %s", os.Args[2])
+			log.Fatalf("Unknown argument: %s", arg)
 		}
 	}
 	
@@ -74,7 +88,13 @@ func runCLI() {
 	log.Printf("Processing %s with %d events", filename, len(events))
 	log.Println("Starting simulation...")
 	
-	result := outrights.ProcessEventsFile(events, generations)
+	// Create options struct with overrides
+	opts := outrights.ProcessEventsFileOptions{
+		Generations: generations,
+		NPaths:      npaths,
+	}
+	
+	result := outrights.ProcessEventsFile(events, opts)
 	
 	log.Printf("Home advantage: %.4f, Solver error: %.6f", result.HomeAdvantage, result.SolverError)
 	log.Println()
