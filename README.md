@@ -1,98 +1,150 @@
-# Football Ratings Go Implementation
+# Go Outrights - Football Ratings Package
 
-High-performance Go rewrite of the Python football ratings solver, optimized for AWS Lambda deployment.
+A high-performance Go package for calculating football team ratings and outright market probabilities. Designed for easy integration into other Go projects via GitHub.
 
-## Performance Improvements
+## Installation
 
-- **10-50x faster execution** compared to Python implementation
-- **Parallel genetic algorithm** with concurrent fitness evaluation
-- **Efficient memory management** without garbage collection pauses during computation
-- **Fast Lambda cold starts** (~100ms vs 1-2s for Python)
-- **Optimized matrix operations** using native Go performance
+```bash
+go get github.com/jhw/go-outrights
+```
 
-## Key Features
+## Usage
+
+### Basic Usage
+
+```go
+import "github.com/jhw/go-outrights/pkg/outrights"
+
+// Load your events data
+events := []outrights.Event{
+    {
+        Name: "Team A vs Team B",
+        Date: "2024-01-15T15:00:00Z",
+        MatchOdds: outrights.MatchOdds{
+            Prices: []float64{2.1, 3.2, 3.8},
+        },
+    },
+    // ... more events
+}
+
+// Process with default settings
+result := outrights.ProcessEventsFile(events)
+
+// Access results
+for _, team := range result.Teams {
+    fmt.Printf("%s: PPG=%.3f, Poisson=%.3f\n", 
+        team.Name, team.PointsPerGameRating, team.PoissonRating)
+}
+```
+
+### Advanced Configuration
+
+```go
+// Custom parameters
+opts := outrights.ProcessEventsFileOptions{
+    Generations: 2000,  // More iterations for better accuracy
+    NPaths:      10000, // More simulation paths
+}
+
+result := outrights.ProcessEventsFile(events, opts)
+```
+
+### CLI Usage
+
+```bash
+# Run with default settings
+go run . events.json
+
+# Custom parameters
+go run . events.json --generations=2000 --npaths=10000
+```
+
+## API Reference
+
+### Main Functions
+
+- `ProcessEventsFile(events []Event, opts ...ProcessEventsFileOptions) SimulationResult`
+- `ProcessSimulation(req SimulationRequest, generations int) SimulationResult`
+
+### Key Types
+
+```go
+type Event struct {
+    Name      string    `json:"name"`
+    Date      string    `json:"date"`
+    MatchOdds MatchOdds `json:"match_odds"`
+}
+
+type SimulationResult struct {
+    Teams         []Team         `json:"teams"`
+    OutrightMarks []OutrightMark `json:"outright_marks"`
+    HomeAdvantage float64        `json:"home_advantage"`
+    SolverError   float64        `json:"solver_error"`
+}
+
+type Team struct {
+    Name                  string    `json:"name"`
+    Points                float64   `json:"points"`
+    PointsPerGameRating   float64   `json:"points_per_game_rating"`
+    PoissonRating         float64   `json:"poisson_rating"`
+    ExpectedSeasonPoints  float64   `json:"expected_season_points"`
+    // ... more fields
+}
+```
+
+## Features
 
 - **Poisson-based team ratings** with Dixon-Coles adjustment
 - **Genetic algorithm solver** for parameter optimization
 - **Monte Carlo simulation** for position probabilities
 - **Outright market calculations** with configurable payoffs
-- **JSON API** compatible with AWS Lambda
+- **Parallel processing** for optimal performance
+- **Clean API design** for easy integration
 
-## Build and Deploy
+## Performance
 
-```bash
-# Build for Lambda
-GOOS=linux GOARCH=amd64 go build -o main
-zip function.zip main
+- **10-50x faster** than equivalent Python implementations
+- **Concurrent genetic algorithm** with parallel fitness evaluation
+- **Efficient memory management** without GC pauses during computation
+- **Typical solve time**: 50-200ms for 20 teams, 1000 iterations
 
-# Deploy to AWS Lambda
-aws lambda create-function \
-  --function-name football-ratings \
-  --runtime provided.al2 \
-  --role arn:aws:iam::ACCOUNT:role/lambda-role \
-  --handler main \
-  --zip-file fileb://function.zip
-```
+## Configuration Options
 
-## Usage
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `Generations` | 1000 | Genetic algorithm iterations |
+| `NPaths` | 5000 | Monte Carlo simulation paths |
+| `PopulationSize` | 8 | GA candidates per generation |
+| `MutationFactor` | 0.1 | Mutation strength |
+| `EliteRatio` | 0.1 | Fraction of elite candidates preserved |
 
-The API expects a JSON request with the following structure:
+## Input Data Format
+
+Events should be provided as JSON with match odds in decimal format:
 
 ```json
-{
-  "ratings": {"Team A": 2.5, "Team B": 1.8},
-  "training_set": [
-    {
-      "name": "Team A vs Team B",
-      "date": "2024-01-15T15:00:00Z",
-      "match_odds": {"prices": [2.1, 3.2, 3.8]}
+[
+  {
+    "name": "Team A vs Team B",
+    "date": "2024-01-15T15:00:00Z",
+    "match_odds": {
+      "prices": [2.1, 3.2, 3.8]
     }
-  ],
-  "events": [...],
-  "handicaps": {},
-  "markets": [
-    {
-      "name": "Winner",
-      "payoff": [1, 0, 0, 0],
-      "teams": ["Team A", "Team B", "Team C", "Team D"]
-    }
-  ],
-  "rounds": 1,
-  "max_iterations": 500,
-  "population_size": 8,
-  "n_paths": 1000
-}
+  }
+]
 ```
+
+Where `prices` represents [Home Win, Draw, Away Win] odds.
 
 ## Architecture
 
-- **kernel.go**: Core Poisson probability and Dixon-Coles calculations
-- **solver.go**: Genetic algorithm optimization engine
-- **simulator.go**: Monte Carlo simulation for remaining fixtures
-- **state.go**: League table and fixture management
-- **main.go**: Lambda handler and orchestration
-- **types.go**: Data structures and API contracts
+- **`pkg/outrights/api.go`**: Main API functions and orchestration
+- **`pkg/outrights/solver.go`**: Genetic algorithm optimization engine
+- **`pkg/outrights/simulator.go`**: Monte Carlo simulation for remaining fixtures
+- **`pkg/outrights/kernel.go`**: Core Poisson probability calculations
+- **`pkg/outrights/state.go`**: League table and fixture management
+- **`pkg/outrights/types.go`**: Data structures and API contracts
 
-## Performance Characteristics
+## License
 
-- **Typical solve time**: 50-200ms for 20 teams, 500 iterations
-- **Memory usage**: 10-50MB peak
-- **Cold start**: ~100ms
-- **Concurrent fitness evaluation**: Full CPU utilization
-
-## Configuration
-
-All solver parameters are configurable via the API request:
-
-- `max_iterations`: Genetic algorithm generations (default: 500)
-- `population_size`: Candidates per generation (default: 8)
-- `mutation_factor`: Mutation strength (default: 0.1)
-- `elite_ratio`: Fraction of elite candidates preserved (default: 0.2)
-- `n_paths`: Monte Carlo simulation paths (default: 1000)
-- `excellent_error`: Early stopping threshold (default: 0.03)
-- `max_error`: Maximum acceptable error (default: 0.05)
-
-## Dependencies
-
-- `github.com/aws/aws-lambda-go`: AWS Lambda runtime
-- `gonum.org/v1/gonum`: Mathematical operations (optional, can be replaced with native Go)
+This package is designed for reuse in other Go projects. Import via GitHub and integrate into your football analytics applications.
