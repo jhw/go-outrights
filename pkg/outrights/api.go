@@ -35,7 +35,6 @@ func ProcessEventsFile(events []Event) SimulationResult {
 		Handicaps:       make(map[string]float64),
 		Markets:         []Market{{Name: "Winner", Payoff: createWinnerPayoff(len(teamNames)), Teams: teamNames}},
 		Rounds:          38,
-		MaxIterations:   500,
 		PopulationSize:  8,
 		MutationFactor:  0.1,
 		EliteRatio:      0.2,
@@ -45,8 +44,6 @@ func ProcessEventsFile(events []Event) SimulationResult {
 		MutationProbability: 0.1,
 		ExplorationInterval: 50,
 		NExplorationPoints: 5,
-		ExcellentError:  0.01,
-		MaxError:        1.0,
 		NPaths:          1000,
 	}
 	
@@ -78,7 +75,6 @@ func ProcessSimulation(req SimulationRequest) SimulationResult {
 	
 	// Create options map
 	options := map[string]interface{}{
-		"max_iterations":         req.MaxIterations,
 		"population_size":        req.PopulationSize,
 		"mutation_factor":        req.MutationFactor,
 		"elite_ratio":            req.EliteRatio,
@@ -88,8 +84,6 @@ func ProcessSimulation(req SimulationRequest) SimulationResult {
 		"mutation_probability":   req.MutationProbability,
 		"exploration_interval":   req.ExplorationInterval,
 		"n_exploration_points":   req.NExplorationPoints,
-		"excellent_error":        req.ExcellentError,
-		"max_error":              req.MaxError,
 	}
 	
 	// Solve for ratings using training data

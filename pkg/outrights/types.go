@@ -52,7 +52,6 @@ type SimulationRequest struct {
 	Rounds      int                `json:"rounds"`
 	
 	// Solver parameters
-	MaxIterations         int     `json:"max_iterations"`
 	PopulationSize        int     `json:"population_size"`
 	MutationFactor        float64 `json:"mutation_factor"`
 	EliteRatio            float64 `json:"elite_ratio"`
@@ -62,7 +61,5 @@ type SimulationRequest struct {
 	MutationProbability   float64 `json:"mutation_probability"`
 	ExplorationInterval   int     `json:"exploration_interval"`
 	NExplorationPoints    int     `json:"n_exploration_points"`
-	ExcellentError        float64 `json:"excellent_error"`
-	MaxError              float64 `json:"max_error"`
 	NPaths                int     `json:"n_paths"`
 }

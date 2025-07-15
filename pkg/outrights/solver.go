@@ -24,8 +24,6 @@ type GeneticAlgorithm struct {
 	logInterval         int
 	decayExponent       float64
 	mutationProbability float64
-	excellentError      float64
-	maxError            float64
 }
 
 type Individual struct {
@@ -41,7 +39,7 @@ func (p Population) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
 
 func newGeneticAlgorithm(options map[string]interface{}) *GeneticAlgorithm {
 	ga := &GeneticAlgorithm{
-		maxIterations:       getIntOption(options, "max_iterations", 500),
+		maxIterations:       1000,
 		populationSize:      getIntOption(options, "population_size", 8),
 		mutationFactor:      getFloatOption(options, "mutation_factor", 0.1),
 		eliteRatio:          getFloatOption(options, "elite_ratio", 0.2),
@@ -49,8 +47,6 @@ func newGeneticAlgorithm(options map[string]interface{}) *GeneticAlgorithm {
 		logInterval:         getIntOption(options, "log_interval", 10),
 		decayExponent:       getFloatOption(options, "decay_exponent", 0.5),
 		mutationProbability: getFloatOption(options, "mutation_probability", 0.3),
-		excellentError:      getFloatOption(options, "excellent_error", 0.03),
-		maxError:            getFloatOption(options, "max_error", 0.05),
 	}
 	return ga
 }
@@ -123,16 +119,6 @@ func (ga *GeneticAlgorithm) optimize(objectiveFn func([]float64) float64, x0 []f
 				generation+1, ga.maxIterations, bestFitness, avgFitness, currentMutation)
 		}
 		
-		// Check convergence
-		if bestFitness <= ga.excellentError {
-			log.Printf("Excellent result achieved at generation %d: error %.6f ≤ %.6f", 
-				generation+1, bestFitness, ga.excellentError)
-			break
-		}
-		
-		if bestFitness > ga.maxError && generation == ga.maxIterations-1 {
-			log.Printf("Max generations reached with error %.6f > %.6f", bestFitness, ga.maxError)
-		}
 		
 		// Create new population
 		newPopulation := make(Population, ga.populationSize)
@@ -335,7 +321,7 @@ func (rs *RatingsSolver) initializeRatingsFromLeagueTable(teamNames []string, ev
 }
 
 func (rs *RatingsSolver) solve(events []Event, ratings map[string]float64, results []Event, options map[string]interface{}) map[string]interface{} {
-	log.Printf("Starting solver with %d events, max_iterations=%d", len(events), getIntOption(options, "max_iterations", 500))
+	log.Printf("Starting solver with %d events, max_iterations=1000", len(events))
 	
 	// Initialize ratings from league table if results are provided
 	useLeagueTableInit := getBoolOption(options, "use_league_table_init", true)
