@@ -61,8 +61,6 @@ func ProcessEventsFile(events []Event, opts ...ProcessEventsFileOptions) Simulat
 		LogInterval:     10,
 		DecayExponent:   2.0,
 		MutationProbability: 0.1,
-		ExplorationInterval: 50,
-		NExplorationPoints: 5,
 		NPaths:          npaths,
 	}
 	
@@ -101,8 +99,6 @@ func ProcessSimulation(req SimulationRequest, generations int) SimulationResult 
 		"log_interval":           req.LogInterval,
 		"decay_exponent":         req.DecayExponent,
 		"mutation_probability":   req.MutationProbability,
-		"exploration_interval":   req.ExplorationInterval,
-		"n_exploration_points":   req.NExplorationPoints,
 		"generations":            generations,
 	}
 	

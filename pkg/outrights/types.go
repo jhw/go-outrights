@@ -59,7 +59,5 @@ type SimulationRequest struct {
 	LogInterval           int     `json:"log_interval"`
 	DecayExponent         float64 `json:"decay_exponent"`
 	MutationProbability   float64 `json:"mutation_probability"`
-	ExplorationInterval   int     `json:"exploration_interval"`
-	NExplorationPoints    int     `json:"n_exploration_points"`
 	NPaths                int     `json:"n_paths"`
 }
