@@ -14,6 +14,7 @@ func calcLeagueTable(teamNames []string, events []Event, handicaps map[string]fl
 			Name:           name,
 			Points:         0,
 			GoalDifference: 0,
+			Played:         0,
 		}
 	}
 	
@@ -57,9 +58,11 @@ func calcLeagueTable(teamNames []string, events []Event, handicaps map[string]fl
 			teams[awayTeam].Points += 1
 		}
 		
-		// Update goal difference
+		// Update goal difference and games played
 		teams[homeTeam].GoalDifference += homeGoals - awayGoals
 		teams[awayTeam].GoalDifference += awayGoals - homeGoals
+		teams[homeTeam].Played += 1
+		teams[awayTeam].Played += 1
 	}
 	
 	// Convert to slice and sort
@@ -79,7 +82,7 @@ func calcLeagueTable(teamNames []string, events []Event, handicaps map[string]fl
 	return result
 }
 
-func calcRemainingFixtures(teamNames []string, events []Event, rounds int) []string {
+func calcRemainingFixtures(teamNames []string, events []Event) []string {
 	playedFixtures := make(map[string]bool)
 	
 	// Track already played fixtures (only those with scores)
@@ -91,15 +94,13 @@ func calcRemainingFixtures(teamNames []string, events []Event, rounds int) []str
 	
 	var remainingFixtures []string
 	
-	// Generate all possible fixtures for the specified number of rounds
-	for round := 0; round < rounds; round++ {
-		for i, homeTeam := range teamNames {
-			for j, awayTeam := range teamNames {
-				if i != j {
-					fixtureName := homeTeam + " vs " + awayTeam
-					if !playedFixtures[fixtureName] {
-						remainingFixtures = append(remainingFixtures, fixtureName)
-					}
+	// Generate all possible fixtures (each team plays every other team home and away)
+	for i, homeTeam := range teamNames {
+		for j, awayTeam := range teamNames {
+			if i != j {
+				fixtureName := homeTeam + " vs " + awayTeam
+				if !playedFixtures[fixtureName] {
+					remainingFixtures = append(remainingFixtures, fixtureName)
 				}
 			}
 		}

@@ -22,6 +22,7 @@ type Team struct {
 	Name                   string    `json:"name"`
 	Points                 float64   `json:"points"`
 	GoalDifference         int       `json:"goal_difference"`
+	Played                 int       `json:"played"`
 	PointsPerGameRating    float64   `json:"points_per_game_rating"`
 	PoissonRating          float64   `json:"poisson_rating"`
 	ExpectedSeasonPoints   float64   `json:"expected_season_points"`
@@ -50,7 +51,6 @@ type SimulationRequest struct {
 	Events      []Event            `json:"events"`
 	Handicaps   map[string]float64 `json:"handicaps"`
 	Markets     []Market           `json:"markets"`
-	Rounds      int                `json:"rounds"`
 	
 	// Solver parameters
 	PopulationSize        int     `json:"population_size"`

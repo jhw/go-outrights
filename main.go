@@ -100,7 +100,8 @@ func runCLI() {
 	log.Println()
 	log.Println("Teams (sorted by points per game rating):")
 	for _, team := range result.Teams {
-		log.Printf("- %s: %.1f pts, PPG rating: %.3f, Poisson rating: %.3f", team.Name, team.Points, team.PointsPerGameRating, team.PoissonRating)
+		log.Printf("- %s: %.1f pts (%d played, %+d GD), PPG rating: %.3f, Poisson rating: %.3f, Expected season: %.1f pts", 
+			team.Name, team.Points, team.Played, team.GoalDifference, team.PointsPerGameRating, team.PoissonRating, team.ExpectedSeasonPoints)
 	}
 	
 	log.Println()

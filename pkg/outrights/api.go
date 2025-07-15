@@ -53,7 +53,6 @@ func ProcessEventsFile(events []Event, opts ...ProcessEventsFileOptions) Simulat
 		Events:          predictionEvents,
 		Handicaps:       make(map[string]float64),
 		Markets:         []Market{{Name: "Winner", Payoff: createWinnerPayoff(len(teamNames)), Teams: teamNames}},
-		Rounds:          2 * (len(teamNames) - 1),
 		PopulationSize:  8,
 		MutationFactor:  0.1,
 		EliteRatio:      0.1,
@@ -85,7 +84,7 @@ func ProcessSimulation(req SimulationRequest, generations int) SimulationResult 
 	
 	// Calculate league table and remaining fixtures
 	leagueTable := calcLeagueTable(teamNames, req.Events, req.Handicaps)
-	remainingFixtures := calcRemainingFixtures(teamNames, req.Events, req.Rounds)
+	remainingFixtures := calcRemainingFixtures(teamNames, req.Events)
 	
 	// Solve for ratings
 	solver := newRatingsSolver()
