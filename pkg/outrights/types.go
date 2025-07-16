@@ -13,9 +13,11 @@ type Event struct {
 }
 
 type Market struct {
-	Name   string    `json:"name"`
-	Payoff []float64 `json:"payoff"`
-	Teams  []string  `json:"teams,omitempty"`
+	Name    string    `json:"name"`
+	Payoff  []float64 `json:"payoff"`
+	Teams   []string  `json:"teams,omitempty"`
+	Include []string  `json:"include,omitempty"`
+	Exclude []string  `json:"exclude,omitempty"`
 }
 
 type Team struct {

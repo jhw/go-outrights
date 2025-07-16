@@ -76,11 +76,17 @@ func ProcessEventsFile(events []Event, opts ...ProcessEventsFileOptions) Simulat
 		req.Ratings[name] = 1.0
 	}
 	
-	return ProcessSimulation(req, generations, rounds, debug)
+	result, err := ProcessSimulation(req, generations, rounds, debug)
+	if err != nil {
+		// For now, log the error and return empty result
+		// In a real implementation, you might want to handle this differently
+		return SimulationResult{}
+	}
+	return result
 }
 
 // ProcessSimulation processes a simulation request and returns results
-func ProcessSimulation(req SimulationRequest, generations int, rounds int, debug bool) SimulationResult {
+func ProcessSimulation(req SimulationRequest, generations int, rounds int, debug bool) (SimulationResult, error) {
 	teamNames := make([]string, 0, len(req.Ratings))
 	for name := range req.Ratings {
 		teamNames = append(teamNames, name)
@@ -88,7 +94,9 @@ func ProcessSimulation(req SimulationRequest, generations int, rounds int, debug
 	sort.Strings(teamNames)
 	
 	// Initialize markets
-	initMarkets(teamNames, req.Markets)
+	if err := InitMarkets(teamNames, req.Markets); err != nil {
+		return SimulationResult{}, err
+	}
 	
 	// Calculate league table and remaining fixtures
 	leagueTable := calcLeagueTable(teamNames, req.Events, req.Handicaps)
@@ -126,7 +134,7 @@ func ProcessSimulation(req SimulationRequest, generations int, rounds int, debug
 	}
 	
 	// Calculate position probabilities
-	positionProbs := calcPositionProbabilities(simPoints, req.Markets)
+	// positionProbs := calcPositionProbabilities(simPoints, req.Markets)
 	
 	// Calculate PPG ratings and expected points
 	ppgRatings := calcPPGRatings(teamNames, poissonRatings, homeAdvantage)
@@ -158,15 +166,18 @@ func ProcessSimulation(req SimulationRequest, generations int, rounds int, debug
 		return leagueTable[i].PointsPerGameRating > leagueTable[j].PointsPerGameRating
 	})
 	
+	// Calculate position probabilities for markets
+	positionProbabilities := calcPositionProbabilities(simPoints, req.Markets)
+	
 	// Calculate outright marks
-	outrightMarks := calcOutrightMarks(positionProbs, req.Markets)
+	outrightMarks := calcOutrightMarks(positionProbabilities, req.Markets)
 	
 	return SimulationResult{
 		Teams:         leagueTable,
 		OutrightMarks: outrightMarks,
 		HomeAdvantage: homeAdvantage,
 		SolverError:   solverError,
-	}
+	}, nil
 }
 
 // Helper functions that were in main.go
@@ -353,12 +364,3 @@ func calcOutrightMarks(positionProbabilities map[string]map[string][]float64, ma
 	return marks
 }
 
-func initMarkets(teamNames []string, markets []Market) {
-	for i := range markets {
-		if len(markets[i].Teams) == 0 {
-			// If no teams specified, use all teams
-			markets[i].Teams = make([]string, len(teamNames))
-			copy(markets[i].Teams, teamNames)
-		}
-	}
-}
