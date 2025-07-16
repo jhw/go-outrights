@@ -40,15 +40,15 @@ func (p Population) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
 
 func newGeneticAlgorithm(options map[string]interface{}) *GeneticAlgorithm {
 	ga := &GeneticAlgorithm{
-		maxIterations:       getIntOption(options, "generations", 1000),
-		populationSize:      getIntOption(options, "population_size", 8),
-		mutationFactor:      getFloatOption(options, "mutation_factor", 0.1),
-		eliteRatio:          getFloatOption(options, "elite_ratio", 0.1),
-		initStd:             getFloatOption(options, "init_std", 1.0),
-		logInterval:         getIntOption(options, "log_interval", 10),
-		decayExponent:       getFloatOption(options, "decay_exponent", 0.5),
-		mutationProbability: getFloatOption(options, "mutation_probability", 0.3),
-		debug:               getBoolOption(options, "debug", false),
+		maxIterations:       options["generations"].(int),
+		populationSize:      options["population_size"].(int),
+		mutationFactor:      options["mutation_factor"].(float64),
+		eliteRatio:          options["elite_ratio"].(float64),
+		initStd:             options["init_std"].(float64),
+		logInterval:         options["log_interval"].(int),
+		decayExponent:       options["decay_exponent"].(float64),
+		mutationProbability: options["mutation_probability"].(float64),
+		debug:               options["debug"].(bool),
 	}
 	return ga
 }
@@ -323,10 +323,13 @@ func (rs *RatingsSolver) initializeRatingsFromLeagueTable(teamNames []string, ev
 }
 
 func (rs *RatingsSolver) solve(events []Event, ratings map[string]float64, results []Event, options map[string]interface{}) map[string]interface{} {
-	log.Printf("Starting solver with %d events, max_iterations=%d", len(events), getIntOption(options, "generations", 1000))
+	log.Printf("Starting solver with %d events, max_iterations=%d", len(events), options["generations"].(int))
 	
 	// Initialize ratings from league table if results are provided
-	useLeagueTableInit := getBoolOption(options, "use_league_table_init", true)
+	useLeagueTableInit := true
+	if val, exists := options["use_league_table_init"]; exists {
+		useLeagueTableInit = val.(bool)
+	}
 	if useLeagueTableInit && len(results) > 0 {
 		teamNames := make([]string, 0, len(ratings))
 		for name := range ratings {
@@ -360,29 +363,3 @@ func (rs *RatingsSolver) solve(events []Event, ratings map[string]float64, resul
 	}
 }
 
-func getIntOption(options map[string]interface{}, key string, defaultValue int) int {
-	if val, exists := options[key]; exists {
-		if intVal, ok := val.(int); ok {
-			return intVal
-		}
-	}
-	return defaultValue
-}
-
-func getFloatOption(options map[string]interface{}, key string, defaultValue float64) float64 {
-	if val, exists := options[key]; exists {
-		if floatVal, ok := val.(float64); ok {
-			return floatVal
-		}
-	}
-	return defaultValue
-}
-
-func getBoolOption(options map[string]interface{}, key string, defaultValue bool) bool {
-	if val, exists := options[key]; exists {
-		if boolVal, ok := val.(bool); ok {
-			return boolVal
-		}
-	}
-	return defaultValue
-}
