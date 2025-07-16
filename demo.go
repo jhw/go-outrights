@@ -13,7 +13,8 @@ import (
 
 func main() {
 	// Default values
-	filename := "fixtures/events.json" // Default events file
+	filename := "fixtures/events.json"   // Default events file
+	marketsFile := "fixtures/markets.json" // Default markets file
 	generations := 0 // 0 means use default
 	npaths := 0      // 0 means use default
 	rounds := 0      // 0 means use default
@@ -44,11 +45,14 @@ func main() {
 			debug = true
 		} else if strings.HasPrefix(arg, "--events=") {
 			filename = strings.TrimPrefix(arg, "--events=")
+		} else if strings.HasPrefix(arg, "--markets=") {
+			marketsFile = strings.TrimPrefix(arg, "--markets=")
 		} else if arg == "--help" || arg == "-h" {
-			fmt.Println("Usage: go run . [--events=filename] [--generations=N] [--npaths=N] [--rounds=N] [--debug]")
+			fmt.Println("Usage: go run . [--events=filename] [--markets=filename] [--generations=N] [--npaths=N] [--rounds=N] [--debug]")
 			fmt.Println()
 			fmt.Println("Options:")
 			fmt.Println("  --events=filename    Events JSON file (default: fixtures/events.json)")
+			fmt.Println("  --markets=filename   Markets JSON file (default: fixtures/markets.json)")
 			fmt.Println("  --generations=N      Number of genetic algorithm generations (default: 1000)")
 			fmt.Println("  --npaths=N          Number of simulation paths (default: 5000)")
 			fmt.Println("  --rounds=N          Number of rounds each team plays (default: 1)")
@@ -59,6 +63,7 @@ func main() {
 			fmt.Println("  go run .                                    # Use default settings")
 			fmt.Println("  go run . --generations=2000 --npaths=5000   # Quick high-quality run")
 			fmt.Println("  go run . --events=fixtures/other.json       # Use different events file")
+			fmt.Println("  go run . --markets=fixtures/other.json      # Use different markets file")
 			fmt.Println("  go run . --debug                           # Enable debug logging")
 			os.Exit(0)
 		} else {
@@ -66,7 +71,7 @@ func main() {
 		}
 	}
 	
-	// Read and parse the JSON file
+	// Read and parse the events JSON file
 	data, err := os.ReadFile(filename)
 	if err != nil {
 		log.Fatal(err)
@@ -77,31 +82,20 @@ func main() {
 		log.Fatal(err)
 	}
 	
+	// Read and parse the markets JSON file
+	marketsData, err := os.ReadFile(marketsFile)
+	if err != nil {
+		log.Fatal(err)
+	}
+	
+	var markets []outrights.Market
+	if err := json.Unmarshal(marketsData, &markets); err != nil {
+		log.Fatal(err)
+	}
+	
 	log.Printf("Processing %s with %d events", filename, len(events))
+	log.Printf("Loaded %d markets from %s", len(markets), marketsFile)
 	log.Println("Starting simulation...")
-	
-	// Extract team names to calculate winner payoff
-	var teamNames []string
-	teamNamesMap := make(map[string]bool)
-	for _, event := range events {
-		parts := strings.Split(event.Name, " vs ")
-		if len(parts) == 2 {
-			teamNamesMap[parts[0]] = true
-			teamNamesMap[parts[1]] = true
-		}
-	}
-	for name := range teamNamesMap {
-		teamNames = append(teamNames, name)
-	}
-	
-	// Create Winner market (like Python: winner_payoff = f"1|{len(team_names)-1}x0")
-	winnerPayoff := fmt.Sprintf("1|%dx0", len(teamNames)-1)
-	markets := []outrights.Market{
-		{
-			Name:   "Winner",
-			Payoff: winnerPayoff,
-		},
-	}
 	
 	// Create options struct with overrides
 	opts := outrights.ProcessEventsFileOptions{
