@@ -9,11 +9,18 @@ import (
 
 // SimOptions holds optional configuration for Simulate
 type SimOptions struct {
-	Generations     int
-	NPaths          int
-	Rounds          int
-	TrainingSetSize int
-	Debug           bool
+	Generations          int
+	NPaths               int
+	Rounds               int
+	TrainingSetSize      int
+	PopulationSize       int
+	MutationFactor       float64
+	EliteRatio           float64
+	InitStd              float64
+	LogInterval          int
+	DecayExponent        float64
+	MutationProbability  float64
+	Debug                bool
 }
 
 // Simulate processes events and markets and returns simulation results
@@ -23,6 +30,13 @@ func Simulate(events []Event, markets []Market, handicaps map[string]int, opts .
 	npaths := 5000
 	rounds := 1
 	trainingSetSize := 60
+	populationSize := 8
+	mutationFactor := 0.1
+	eliteRatio := 0.1
+	initStd := 0.2
+	logInterval := 10
+	decayExponent := 2.0
+	mutationProbability := 0.1
 	debug := false
 	
 	// Override with provided options
@@ -38,6 +52,27 @@ func Simulate(events []Event, markets []Market, handicaps map[string]int, opts .
 		}
 		if opts[0].TrainingSetSize > 0 {
 			trainingSetSize = opts[0].TrainingSetSize
+		}
+		if opts[0].PopulationSize > 0 {
+			populationSize = opts[0].PopulationSize
+		}
+		if opts[0].MutationFactor > 0 {
+			mutationFactor = opts[0].MutationFactor
+		}
+		if opts[0].EliteRatio > 0 {
+			eliteRatio = opts[0].EliteRatio
+		}
+		if opts[0].InitStd > 0 {
+			initStd = opts[0].InitStd
+		}
+		if opts[0].LogInterval > 0 {
+			logInterval = opts[0].LogInterval
+		}
+		if opts[0].DecayExponent > 0 {
+			decayExponent = opts[0].DecayExponent
+		}
+		if opts[0].MutationProbability > 0 {
+			mutationProbability = opts[0].MutationProbability
 		}
 		debug = opts[0].Debug
 	}
@@ -107,13 +142,13 @@ func Simulate(events []Event, markets []Market, handicaps map[string]int, opts .
 		Events:          predictionEvents,
 		Handicaps:       handicaps,
 		Markets:         markets,
-		PopulationSize:  8,
-		MutationFactor:  0.1,
-		EliteRatio:      0.1,
-		InitStd:         0.2,
-		LogInterval:     10,
-		DecayExponent:   2.0,
-		MutationProbability: 0.1,
+		PopulationSize:  populationSize,
+		MutationFactor:  mutationFactor,
+		EliteRatio:      eliteRatio,
+		InitStd:         initStd,
+		LogInterval:     logInterval,
+		DecayExponent:   decayExponent,
+		MutationProbability: mutationProbability,
 		NPaths:          npaths,
 	}
 	

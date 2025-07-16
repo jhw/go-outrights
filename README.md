@@ -121,9 +121,16 @@ type Team struct {
 |-----------|---------|-------------|
 | `Generations` | 1000 | Genetic algorithm iterations |
 | `NPaths` | 5000 | Monte Carlo simulation paths |
+| `Rounds` | 1 | Number of rounds each team plays |
+| `TrainingSetSize` | 60 | Number of recent events for training |
 | `PopulationSize` | 8 | GA candidates per generation |
 | `MutationFactor` | 0.1 | Mutation strength |
 | `EliteRatio` | 0.1 | Fraction of elite candidates preserved |
+| `InitStd` | 0.2 | Initial standard deviation for ratings |
+| `LogInterval` | 10 | Logging interval for GA progress |
+| `DecayExponent` | 2.0 | Decay exponent for time-based weighting |
+| `MutationProbability` | 0.1 | Probability of mutation per candidate |
+| `Debug` | false | Enable debug logging for genetic algorithm |
 
 ## Input Data Format
 
