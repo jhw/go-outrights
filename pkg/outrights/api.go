@@ -11,6 +11,7 @@ type ProcessEventsFileOptions struct {
 	NPaths      int
 	Rounds      int
 	Debug       bool
+	Markets     []Market
 }
 
 // ProcessEventsFile processes a JSON file containing events and returns simulation results
@@ -20,6 +21,7 @@ func ProcessEventsFile(events []Event, opts ...ProcessEventsFileOptions) Simulat
 	npaths := 5000
 	rounds := 1
 	debug := false
+	var markets []Market
 	
 	// Override with provided options
 	if len(opts) > 0 {
@@ -33,6 +35,7 @@ func ProcessEventsFile(events []Event, opts ...ProcessEventsFileOptions) Simulat
 			rounds = opts[0].Rounds
 		}
 		debug = opts[0].Debug
+		markets = opts[0].Markets
 	}
 	// Extract team names from events
 	teamNamesMap := make(map[string]bool)
@@ -60,7 +63,7 @@ func ProcessEventsFile(events []Event, opts ...ProcessEventsFileOptions) Simulat
 		TrainingSet:     trainingEvents,
 		Events:          predictionEvents,
 		Handicaps:       make(map[string]float64),
-		Markets:         []Market{{Name: "Winner", Payoff: createWinnerPayoff(len(teamNames)), Teams: teamNames}},
+		Markets:         markets,
 		PopulationSize:  8,
 		MutationFactor:  0.1,
 		EliteRatio:      0.1,
@@ -180,13 +183,6 @@ func ProcessSimulation(req SimulationRequest, generations int, rounds int, debug
 	}, nil
 }
 
-// Helper functions that were in main.go
-func createWinnerPayoff(numTeams int) []float64 {
-	payoff := make([]float64, numTeams)
-	payoff[0] = 1.0  // Winner gets payoff of 1
-	// All other positions get payoff of 0 (already initialized)
-	return payoff
-}
 
 func mean(x []float64) float64 {
 	if len(x) == 0 {
@@ -350,7 +346,12 @@ func calcOutrightMarks(positionProbabilities map[string]map[string][]float64, ma
 		if groupProbs, exists := positionProbabilities[groupKey]; exists {
 			for _, teamName := range market.Teams {
 				if teamProbs, exists := groupProbs[teamName]; exists {
-					markValue := sumProduct(teamProbs, market.Payoff)
+					// Convert []int to []float64 for calculation
+					payoffFloat := make([]float64, len(market.ParsedPayoff))
+					for i, v := range market.ParsedPayoff {
+						payoffFloat[i] = float64(v)
+					}
+					markValue := sumProduct(teamProbs, payoffFloat)
 					marks = append(marks, OutrightMark{
 						Market: market.Name,
 						Team:   teamName,

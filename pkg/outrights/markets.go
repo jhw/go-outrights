@@ -6,29 +6,29 @@ import (
 	"strings"
 )
 
-// parsePayoff parses payoff expressions like "1|19x0" meaning 1 winner gets 1.0, 19 losers get 0.0
-func parsePayoff(payoffExpr string) ([]float64, error) {
-	var payoff []float64
+// parsePayoff parses payoff expressions like "1|19x0" meaning 1 winner gets 1, 19 losers get 0
+func parsePayoff(payoffExpr string) ([]int, error) {
+	var payoff []int
 	
 	for _, expr := range strings.Split(payoffExpr, "|") {
 		tokens := strings.Split(expr, "x")
 		
 		var n int
-		var v float64
+		var v int
 		var err error
 		
 		if len(tokens) == 1 {
 			// Single value, assume n=1
 			n = 1
-			v, err = strconv.ParseFloat(tokens[0], 64)
+			v, err = strconv.Atoi(tokens[0])
 		} else if len(tokens) == 2 {
 			// n and value
-			nFloat, err1 := strconv.ParseFloat(tokens[0], 64)
-			v, err = strconv.ParseFloat(tokens[1], 64)
+			var err1 error
+			n, err1 = strconv.Atoi(tokens[0])
+			v, err = strconv.Atoi(tokens[1])
 			if err1 != nil || err != nil {
 				return nil, fmt.Errorf("invalid payoff format: %s", expr)
 			}
-			n = int(nFloat)
 		} else {
 			return nil, fmt.Errorf("invalid payoff format: %s", expr)
 		}
@@ -125,15 +125,21 @@ func InitMarkets(teamNames []string, markets []Market) error {
 			return err
 		}
 		
-		// Parse payoff if it's not already set
-		if len(market.Payoff) == 0 {
+		// Parse payoff string
+		if market.Payoff == "" {
 			return fmt.Errorf("market %s has no payoff defined", market.Name)
 		}
 		
+		parsedPayoff, err := parsePayoff(market.Payoff)
+		if err != nil {
+			return fmt.Errorf("error parsing payoff for market %s: %v", market.Name, err)
+		}
+		market.ParsedPayoff = parsedPayoff
+		
 		// Validate payoff length matches teams
-		if len(market.Payoff) != len(market.Teams) {
+		if len(market.ParsedPayoff) != len(market.Teams) {
 			return fmt.Errorf("%s teams/payoff mismatch: %d teams, %d payoffs", 
-				market.Name, len(market.Teams), len(market.Payoff))
+				market.Name, len(market.Teams), len(market.ParsedPayoff))
 		}
 	}
 	

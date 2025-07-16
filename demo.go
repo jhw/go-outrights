@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"os"
 	"strconv"
@@ -63,12 +64,36 @@ func main() {
 	log.Printf("Processing %s with %d events", filename, len(events))
 	log.Println("Starting simulation...")
 	
+	// Extract team names to calculate winner payoff
+	var teamNames []string
+	teamNamesMap := make(map[string]bool)
+	for _, event := range events {
+		parts := strings.Split(event.Name, " vs ")
+		if len(parts) == 2 {
+			teamNamesMap[parts[0]] = true
+			teamNamesMap[parts[1]] = true
+		}
+	}
+	for name := range teamNamesMap {
+		teamNames = append(teamNames, name)
+	}
+	
+	// Create Winner market (like Python: winner_payoff = f"1|{len(team_names)-1}x0")
+	winnerPayoff := fmt.Sprintf("1|%dx0", len(teamNames)-1)
+	markets := []outrights.Market{
+		{
+			Name:   "Winner",
+			Payoff: winnerPayoff,
+		},
+	}
+	
 	// Create options struct with overrides
 	opts := outrights.ProcessEventsFileOptions{
 		Generations: generations,
 		NPaths:      npaths,
 		Rounds:      rounds,
 		Debug:       debug,
+		Markets:     markets,
 	}
 	
 	result := outrights.ProcessEventsFile(events, opts)
