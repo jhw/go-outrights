@@ -180,9 +180,9 @@ func ProcessSimulation(req SimulationRequest, generations int, rounds int, debug
 		}
 	}
 	
-	// Sort teams by PPG rating
+	// Sort teams by expected season points (descending)
 	sort.Slice(leagueTable, func(i, j int) bool {
-		return leagueTable[i].PointsPerGameRating > leagueTable[j].PointsPerGameRating
+		return leagueTable[i].ExpectedSeasonPoints > leagueTable[j].ExpectedSeasonPoints
 	})
 	
 	// Calculate position probabilities for markets

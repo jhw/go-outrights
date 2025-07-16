@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -118,7 +119,7 @@ func main() {
 	
 	log.Printf("Home advantage: %.4f, Solver error: %.6f", result.HomeAdvantage, result.SolverError)
 	log.Println()
-	log.Println("Teams (sorted by points per game rating):")
+	log.Println("Teams (sorted by expected season points):")
 	for _, team := range result.Teams {
 		log.Printf("- %s: %d pts (%d played, %+d GD), PPG rating: %.3f, Poisson rating: %.3f, Expected season: %.1f pts", 
 			team.Name, team.Points, team.Played, team.GoalDifference, team.PointsPerGameRating, team.PoissonRating, team.ExpectedSeasonPoints)
@@ -126,17 +127,26 @@ func main() {
 	
 	log.Println()
 	log.Println("Outright marks:")
-	// Group marks by market
+	// Group marks by market and filter out zeros
 	marketGroups := make(map[string][]outrights.OutrightMark)
 	for _, mark := range result.OutrightMarks {
-		marketGroups[mark.Market] = append(marketGroups[mark.Market], mark)
+		if mark.Mark > 0 { // Only include non-zero marks
+			marketGroups[mark.Market] = append(marketGroups[mark.Market], mark)
+		}
 	}
 	
 	// Print marks grouped by market
 	for marketName, marks := range marketGroups {
-		log.Printf("%s:", marketName)
-		for _, mark := range marks {
-			log.Printf("  - %s: %.3f", mark.Team, mark.Mark)
+		if len(marks) > 0 { // Only print markets with non-zero marks
+			// Sort marks by value (descending)
+			sort.Slice(marks, func(i, j int) bool {
+				return marks[i].Mark > marks[j].Mark
+			})
+			
+			log.Printf("%s:", marketName)
+			for _, mark := range marks {
+				log.Printf("  - %s: %.3f", mark.Team, mark.Mark)
+			}
 		}
 	}
 }
