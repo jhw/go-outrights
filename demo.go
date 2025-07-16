@@ -18,6 +18,7 @@ func main() {
 	generations := 0 // 0 means use default
 	npaths := 0      // 0 means use default
 	rounds := 0      // 0 means use default
+	trainingSetSize := 0 // 0 means use default
 	debug := false   // default false
 	
 	// Parse named arguments
@@ -41,6 +42,12 @@ func main() {
 			} else {
 				log.Fatalf("Invalid rounds: %s", arg)
 			}
+		} else if strings.HasPrefix(arg, "--training-set-size=") {
+			if t, err := strconv.Atoi(strings.TrimPrefix(arg, "--training-set-size=")); err == nil {
+				trainingSetSize = t
+			} else {
+				log.Fatalf("Invalid training-set-size: %s", arg)
+			}
 		} else if arg == "--debug" {
 			debug = true
 		} else if strings.HasPrefix(arg, "--events=") {
@@ -48,15 +55,16 @@ func main() {
 		} else if strings.HasPrefix(arg, "--markets=") {
 			marketsFile = strings.TrimPrefix(arg, "--markets=")
 		} else if arg == "--help" || arg == "-h" {
-			fmt.Println("Usage: go run . [--events=filename] [--markets=filename] [--generations=N] [--npaths=N] [--rounds=N] [--debug]")
+			fmt.Println("Usage: go run . [--events=filename] [--markets=filename] [--generations=N] [--npaths=N] [--rounds=N] [--training-set-size=N] [--debug]")
 			fmt.Println()
 			fmt.Println("Options:")
-			fmt.Println("  --events=filename    Events JSON file (default: fixtures/events.json)")
-			fmt.Println("  --markets=filename   Markets JSON file (default: fixtures/markets.json)")
-			fmt.Println("  --generations=N      Number of genetic algorithm generations (default: 1000)")
-			fmt.Println("  --npaths=N          Number of simulation paths (default: 5000)")
-			fmt.Println("  --rounds=N          Number of rounds each team plays (default: 1)")
-			fmt.Println("  --debug             Enable debug logging for genetic algorithm")
+			fmt.Println("  --events=filename       Events JSON file (default: fixtures/events.json)")
+			fmt.Println("  --markets=filename      Markets JSON file (default: fixtures/markets.json)")
+			fmt.Println("  --generations=N         Number of genetic algorithm generations (default: 1000)")
+			fmt.Println("  --npaths=N             Number of simulation paths (default: 5000)")
+			fmt.Println("  --rounds=N             Number of rounds each team plays (default: 1)")
+			fmt.Println("  --training-set-size=N  Number of recent events for training (default: 60)")
+			fmt.Println("  --debug                Enable debug logging for genetic algorithm")
 			fmt.Println("  --help, -h          Show this help message")
 			fmt.Println()
 			fmt.Println("Examples:")
@@ -99,10 +107,11 @@ func main() {
 	
 	// Create options struct with overrides
 	opts := outrights.SimOptions{
-		Generations: generations,
-		NPaths:      npaths,
-		Rounds:      rounds,
-		Debug:       debug,
+		Generations:     generations,
+		NPaths:          npaths,
+		Rounds:          rounds,
+		TrainingSetSize: trainingSetSize,
+		Debug:           debug,
 	}
 	
 	result := outrights.Simulate(events, markets, opts)

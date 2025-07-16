@@ -7,10 +7,11 @@ import (
 
 // SimOptions holds optional configuration for Simulate
 type SimOptions struct {
-	Generations int
-	NPaths      int
-	Rounds      int
-	Debug       bool
+	Generations     int
+	NPaths          int
+	Rounds          int
+	TrainingSetSize int
+	Debug           bool
 }
 
 // Simulate processes events and markets and returns simulation results
@@ -19,6 +20,7 @@ func Simulate(events []Event, markets []Market, opts ...SimOptions) SimulationRe
 	generations := 1000
 	npaths := 5000
 	rounds := 1
+	trainingSetSize := 60
 	debug := false
 	
 	// Override with provided options
@@ -31,6 +33,9 @@ func Simulate(events []Event, markets []Market, opts ...SimOptions) SimulationRe
 		}
 		if opts[0].Rounds > 0 {
 			rounds = opts[0].Rounds
+		}
+		if opts[0].TrainingSetSize > 0 {
+			trainingSetSize = opts[0].TrainingSetSize
 		}
 		debug = opts[0].Debug
 	}
@@ -49,10 +54,24 @@ func Simulate(events []Event, markets []Market, opts ...SimOptions) SimulationRe
 		teamNames = append(teamNames, name)
 	}
 	
+	// Sort events by date and name for consistent training set selection
+	sort.Slice(events, func(i, j int) bool {
+		if events[i].Date == events[j].Date {
+			return events[i].Name < events[j].Name
+		}
+		return events[i].Date < events[j].Date
+	})
+	
 	// Split events into training and prediction sets
-	trainingCount := len(events) * 30 / 100  // 30% for training
-	trainingEvents := events[:trainingCount]
-	predictionEvents := events[trainingCount:]
+	// Take the last trainingSetSize events for training
+	trainingCount := trainingSetSize
+	if trainingCount > len(events) {
+		trainingCount = len(events)
+	}
+	
+	startIndex := len(events) - trainingCount
+	trainingEvents := events[startIndex:]
+	predictionEvents := events[:startIndex]
 	
 	// Create simulation request
 	req := SimulationRequest{

@@ -42,8 +42,9 @@ for _, team := range result.Teams {
 ```go
 // Custom parameters
 opts := outrights.SimOptions{
-    Generations: 2000,  // More iterations for better accuracy
-    NPaths:      10000, // More simulation paths
+    Generations:     2000, // More iterations for better accuracy
+    NPaths:          10000, // More simulation paths
+    TrainingSetSize: 80,   // Number of recent events for training
 }
 
 result := outrights.Simulate(events, markets, opts)
