@@ -24,6 +24,7 @@ type GeneticAlgorithm struct {
 	logInterval         int
 	decayExponent       float64
 	mutationProbability float64
+	debug               bool
 }
 
 type Individual struct {
@@ -47,6 +48,7 @@ func newGeneticAlgorithm(options map[string]interface{}) *GeneticAlgorithm {
 		logInterval:         getIntOption(options, "log_interval", 10),
 		decayExponent:       getFloatOption(options, "decay_exponent", 0.5),
 		mutationProbability: getFloatOption(options, "mutation_probability", 0.3),
+		debug:               getBoolOption(options, "debug", false),
 	}
 	return ga
 }
@@ -105,7 +107,7 @@ func (ga *GeneticAlgorithm) optimize(objectiveFn func([]float64) float64, x0 []f
 		}
 		
 		// Log progress
-		if generation%ga.logInterval == 0 || generation == ga.maxIterations-1 {
+		if ga.debug && (generation%ga.logInterval == 0 || generation == ga.maxIterations-1) {
 			avgFitness := 0.0
 			for _, ind := range population {
 				avgFitness += ind.Fitness

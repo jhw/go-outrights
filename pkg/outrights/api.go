@@ -10,6 +10,7 @@ type ProcessEventsFileOptions struct {
 	Generations int
 	NPaths      int
 	Rounds      int
+	Debug       bool
 }
 
 // ProcessEventsFile processes a JSON file containing events and returns simulation results
@@ -18,6 +19,7 @@ func ProcessEventsFile(events []Event, opts ...ProcessEventsFileOptions) Simulat
 	generations := 1000
 	npaths := 5000
 	rounds := 1
+	debug := false
 	
 	// Override with provided options
 	if len(opts) > 0 {
@@ -30,6 +32,7 @@ func ProcessEventsFile(events []Event, opts ...ProcessEventsFileOptions) Simulat
 		if opts[0].Rounds > 0 {
 			rounds = opts[0].Rounds
 		}
+		debug = opts[0].Debug
 	}
 	// Extract team names from events
 	teamNamesMap := make(map[string]bool)
@@ -73,11 +76,11 @@ func ProcessEventsFile(events []Event, opts ...ProcessEventsFileOptions) Simulat
 		req.Ratings[name] = 1.0
 	}
 	
-	return ProcessSimulation(req, generations, rounds)
+	return ProcessSimulation(req, generations, rounds, debug)
 }
 
 // ProcessSimulation processes a simulation request and returns results
-func ProcessSimulation(req SimulationRequest, generations int, rounds int) SimulationResult {
+func ProcessSimulation(req SimulationRequest, generations int, rounds int, debug bool) SimulationResult {
 	teamNames := make([]string, 0, len(req.Ratings))
 	for name := range req.Ratings {
 		teamNames = append(teamNames, name)
@@ -104,6 +107,7 @@ func ProcessSimulation(req SimulationRequest, generations int, rounds int) Simul
 		"decay_exponent":         req.DecayExponent,
 		"mutation_probability":   req.MutationProbability,
 		"generations":            generations,
+		"debug":                  debug,
 	}
 	
 	// Solve for ratings using training data

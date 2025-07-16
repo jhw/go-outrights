@@ -12,13 +12,14 @@ import (
 
 func main() {
 	if len(os.Args) < 2 {
-		log.Fatal("Usage: go run . <filename> [--generations=N] [--npaths=N] [--rounds=N]")
+		log.Fatal("Usage: go run . <filename> [--generations=N] [--npaths=N] [--rounds=N] [--debug]")
 	}
 	
 	filename := os.Args[1]
 	generations := 0 // 0 means use default
 	npaths := 0      // 0 means use default
 	rounds := 0      // 0 means use default
+	debug := false   // default false
 	
 	// Parse named arguments
 	for i := 2; i < len(os.Args); i++ {
@@ -41,6 +42,8 @@ func main() {
 			} else {
 				log.Fatalf("Invalid rounds: %s", arg)
 			}
+		} else if arg == "--debug" {
+			debug = true
 		} else {
 			log.Fatalf("Unknown argument: %s", arg)
 		}
@@ -65,6 +68,7 @@ func main() {
 		Generations: generations,
 		NPaths:      npaths,
 		Rounds:      rounds,
+		Debug:       debug,
 	}
 	
 	result := outrights.ProcessEventsFile(events, opts)
