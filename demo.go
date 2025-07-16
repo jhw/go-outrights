@@ -115,14 +115,23 @@ func main() {
 		Debug:           debug,
 	}
 	
-	result := outrights.Simulate(events, markets, opts)
+	result, err := outrights.Simulate(events, markets, opts)
+	if err != nil {
+		log.Fatalf("Simulation error: %v", err)
+	}
 	
 	log.Printf("Home advantage: %.4f, Solver error: %.6f", result.HomeAdvantage, result.SolverError)
 	log.Println()
 	log.Println("Teams (sorted by expected season points):")
+	log.Println("Team            \tPts\tPlayed\tGD\tPPG\tPoisson\tExp.Pts\tEv\tError\tStdErr")
+	log.Println("----            \t---\t------\t--\t---\t-------\t-------\t--\t-----\t------")
 	for _, team := range result.Teams {
-		log.Printf("- %s: %d pts (%d played, %+d GD), PPG rating: %.3f, Poisson rating: %.3f, Expected season: %.1f pts", 
-			team.Name, team.Points, team.Played, team.GoalDifference, team.PointsPerGameRating, team.PoissonRating, team.ExpectedSeasonPoints)
+		teamName := team.Name
+		if len(teamName) > 16 {
+			teamName = teamName[:16]
+		}
+		log.Printf("%-16s\t%d\t%d\t%+d\t%.3f\t%.3f\t%.1f\t%d\t%.3f\t%.3f", 
+			teamName, team.Points, team.Played, team.GoalDifference, team.PointsPerGameRating, team.PoissonRating, team.ExpectedSeasonPoints, team.TrainingEvents, team.MeanTrainingError, team.StdTrainingError)
 	}
 	
 	log.Println()

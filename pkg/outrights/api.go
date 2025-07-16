@@ -1,6 +1,7 @@
 package outrights
 
 import (
+	"errors"
 	"math"
 	"sort"
 )
@@ -15,7 +16,7 @@ type SimOptions struct {
 }
 
 // Simulate processes events and markets and returns simulation results
-func Simulate(events []Event, markets []Market, opts ...SimOptions) SimulationResult {
+func Simulate(events []Event, markets []Market, opts ...SimOptions) (SimulationResult, error) {
 	// Set defaults
 	generations := 1000
 	npaths := 5000
@@ -39,6 +40,12 @@ func Simulate(events []Event, markets []Market, opts ...SimOptions) SimulationRe
 		}
 		debug = opts[0].Debug
 	}
+	
+	// Validate that events are not empty
+	if len(events) == 0 {
+		return SimulationResult{}, errors.New("events cannot be empty")
+	}
+	
 	// Extract team names from events
 	teamNamesMap := make(map[string]bool)
 	for _, event := range events {
@@ -52,6 +59,11 @@ func Simulate(events []Event, markets []Market, opts ...SimOptions) SimulationRe
 	teamNames := make([]string, 0, len(teamNamesMap))
 	for name := range teamNamesMap {
 		teamNames = append(teamNames, name)
+	}
+	
+	// Validate that team names are not empty
+	if len(teamNames) == 0 {
+		return SimulationResult{}, errors.New("no valid team names found in events")
 	}
 	
 	// Sort events by date and name for consistent training set selection
@@ -97,11 +109,9 @@ func Simulate(events []Event, markets []Market, opts ...SimOptions) SimulationRe
 	
 	result, err := ProcessSimulation(req, generations, rounds, debug)
 	if err != nil {
-		// For now, log the error and return empty result
-		// In a real implementation, you might want to handle this differently
-		return SimulationResult{}
+		return SimulationResult{}, err
 	}
-	return result
+	return result, nil
 }
 
 // ProcessSimulation processes a simulation request and returns results
