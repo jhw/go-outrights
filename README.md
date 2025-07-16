@@ -128,7 +128,7 @@ type Team struct {
 | `EliteRatio` | 0.1 | Fraction of elite candidates preserved |
 | `InitStd` | 0.2 | Initial standard deviation for ratings |
 | `LogInterval` | 10 | Logging interval for GA progress |
-| `DecayExponent` | 2.0 | Decay exponent for time-based weighting |
+| `DecayExponent` | 0.5 | Decay exponent for time-based weighting |
 | `MutationProbability` | 0.1 | Probability of mutation per candidate |
 | `Debug` | false | Enable debug logging for genetic algorithm |
 

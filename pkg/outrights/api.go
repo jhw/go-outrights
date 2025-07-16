@@ -35,7 +35,7 @@ func Simulate(events []Event, markets []Market, handicaps map[string]int, opts .
 	eliteRatio := 0.1
 	initStd := 0.2
 	logInterval := 10
-	decayExponent := 2.0
+	decayExponent := 0.5
 	mutationProbability := 0.1
 	debug := false
 	
