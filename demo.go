@@ -115,7 +115,7 @@ func main() {
 		Debug:           debug,
 	}
 	
-	result, err := outrights.Simulate(events, markets, opts)
+	result, err := outrights.Simulate(events, markets, make(map[string]int), opts)
 	if err != nil {
 		log.Fatalf("Simulation error: %v", err)
 	}

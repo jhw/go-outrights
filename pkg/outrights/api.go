@@ -2,6 +2,7 @@ package outrights
 
 import (
 	"errors"
+	"fmt"
 	"math"
 	"sort"
 )
@@ -16,7 +17,7 @@ type SimOptions struct {
 }
 
 // Simulate processes events and markets and returns simulation results
-func Simulate(events []Event, markets []Market, opts ...SimOptions) (SimulationResult, error) {
+func Simulate(events []Event, markets []Market, handicaps map[string]int, opts ...SimOptions) (SimulationResult, error) {
 	// Set defaults
 	generations := 1000
 	npaths := 5000
@@ -66,6 +67,20 @@ func Simulate(events []Event, markets []Market, opts ...SimOptions) (SimulationR
 		return SimulationResult{}, errors.New("no valid team names found in events")
 	}
 	
+	// Validate handicaps keys against extracted team names
+	for teamName := range handicaps {
+		found := false
+		for _, validTeam := range teamNames {
+			if teamName == validTeam {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return SimulationResult{}, fmt.Errorf("handicaps contains unknown team: %s", teamName)
+		}
+	}
+	
 	// Sort events by date and name for consistent training set selection
 	sort.Slice(events, func(i, j int) bool {
 		if events[i].Date == events[j].Date {
@@ -90,7 +105,7 @@ func Simulate(events []Event, markets []Market, opts ...SimOptions) (SimulationR
 		Ratings:         make(map[string]float64),
 		TrainingSet:     trainingEvents,
 		Events:          predictionEvents,
-		Handicaps:       make(map[string]int),
+		Handicaps:       handicaps,
 		Markets:         markets,
 		PopulationSize:  8,
 		MutationFactor:  0.1,

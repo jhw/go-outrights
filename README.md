@@ -28,7 +28,7 @@ events := []outrights.Event{
 }
 
 // Process with default settings
-result, err := outrights.Simulate(events, markets)
+result, err := outrights.Simulate(events, markets, make(map[string]int))
 if err != nil {
     log.Fatal(err)
 }
@@ -50,7 +50,7 @@ opts := outrights.SimOptions{
     TrainingSetSize: 80,   // Number of recent events for training
 }
 
-result, err := outrights.Simulate(events, markets, opts)
+result, err := outrights.Simulate(events, markets, make(map[string]int), opts)
 if err != nil {
     log.Fatal(err)
 }
@@ -70,7 +70,7 @@ go run . events.json --generations=2000 --npaths=10000
 
 ### Main Functions
 
-- `Simulate(events []Event, markets []Market, opts ...SimOptions) (SimulationResult, error)`
+- `Simulate(events []Event, markets []Market, handicaps map[string]int, opts ...SimOptions) (SimulationResult, error)`
 - `ProcessSimulation(req SimulationRequest, generations int) SimulationResult`
 
 ### Key Types
