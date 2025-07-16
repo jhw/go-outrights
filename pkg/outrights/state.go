@@ -82,13 +82,14 @@ func calcLeagueTable(teamNames []string, events []Event, handicaps map[string]fl
 	return result
 }
 
-func calcRemainingFixtures(teamNames []string, events []Event) []string {
-	playedFixtures := make(map[string]bool)
+func calcRemainingFixtures(teamNames []string, events []Event, rounds int) []string {
+	// Count how many times each fixture has been played
+	playedCounts := make(map[string]int)
 	
-	// Track already played fixtures (only those with scores)
+	// Count already played fixtures (only those with scores)
 	for _, event := range events {
 		if len(event.Score) == 2 {
-			playedFixtures[event.Name] = true
+			playedCounts[event.Name]++
 		}
 	}
 	
@@ -99,7 +100,10 @@ func calcRemainingFixtures(teamNames []string, events []Event) []string {
 		for j, awayTeam := range teamNames {
 			if i != j {
 				fixtureName := homeTeam + " vs " + awayTeam
-				if !playedFixtures[fixtureName] {
+				playedCount := playedCounts[fixtureName]
+				
+				// Add remaining fixtures for this matchup
+				for k := playedCount; k < rounds; k++ {
 					remainingFixtures = append(remainingFixtures, fixtureName)
 				}
 			}

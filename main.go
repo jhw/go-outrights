@@ -1,58 +1,24 @@
 package main
 
 import (
-	"context"
 	"encoding/json"
 	"log"
 	"os"
 	"strconv"
 	"strings"
 
-	"github.com/aws/aws-lambda-go/events"
-	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/jhw/go-outrights/pkg/outrights"
 )
 
-func handleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-	log.Printf("Received request: %s", request.Body)
-	
-	var req outrights.SimulationRequest
-	if err := json.Unmarshal([]byte(request.Body), &req); err != nil {
-		log.Printf("Error unmarshaling request: %v", err)
-		return events.APIGatewayProxyResponse{
-			StatusCode: 400,
-			Body:       "Invalid JSON",
-		}, nil
-	}
-	
-	result := outrights.ProcessSimulation(req, 1000) // explicit default for Lambda
-	
-	responseBody, err := json.Marshal(result)
-	if err != nil {
-		log.Printf("Error marshaling response: %v", err)
-		return events.APIGatewayProxyResponse{
-			StatusCode: 500,
-			Body:       "Internal server error",
-		}, nil
-	}
-	
-	return events.APIGatewayProxyResponse{
-		StatusCode: 200,
-		Headers: map[string]string{
-			"Content-Type": "application/json",
-		},
-		Body: string(responseBody),
-	}, nil
-}
-
-func runCLI() {
+func main() {
 	if len(os.Args) < 2 {
-		log.Fatal("Usage: go run . <filename> [--generations=N] [--npaths=N]")
+		log.Fatal("Usage: go run . <filename> [--generations=N] [--npaths=N] [--rounds=N]")
 	}
 	
 	filename := os.Args[1]
 	generations := 0 // 0 means use default
 	npaths := 0      // 0 means use default
+	rounds := 0      // 0 means use default
 	
 	// Parse named arguments
 	for i := 2; i < len(os.Args); i++ {
@@ -68,6 +34,12 @@ func runCLI() {
 				npaths = n
 			} else {
 				log.Fatalf("Invalid npaths: %s", arg)
+			}
+		} else if strings.HasPrefix(arg, "--rounds=") {
+			if r, err := strconv.Atoi(strings.TrimPrefix(arg, "--rounds=")); err == nil {
+				rounds = r
+			} else {
+				log.Fatalf("Invalid rounds: %s", arg)
 			}
 		} else {
 			log.Fatalf("Unknown argument: %s", arg)
@@ -92,6 +64,7 @@ func runCLI() {
 	opts := outrights.ProcessEventsFileOptions{
 		Generations: generations,
 		NPaths:      npaths,
+		Rounds:      rounds,
 	}
 	
 	result := outrights.ProcessEventsFile(events, opts)
@@ -109,14 +82,4 @@ func runCLI() {
 	for _, mark := range result.OutrightMarks {
 		log.Printf("- %s: %.3f", mark.Team, mark.Mark)
 	}
-}
-
-func main() {
-	// Check if running locally (not in Lambda)
-	if len(os.Args) > 1 {
-		runCLI()
-		return
-	}
-	
-	lambda.Start(handleRequest)
 }

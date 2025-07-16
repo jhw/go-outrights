@@ -9,6 +9,7 @@ import (
 type ProcessEventsFileOptions struct {
 	Generations int
 	NPaths      int
+	Rounds      int
 }
 
 // ProcessEventsFile processes a JSON file containing events and returns simulation results
@@ -16,6 +17,7 @@ func ProcessEventsFile(events []Event, opts ...ProcessEventsFileOptions) Simulat
 	// Set defaults
 	generations := 1000
 	npaths := 5000
+	rounds := 1
 	
 	// Override with provided options
 	if len(opts) > 0 {
@@ -24,6 +26,9 @@ func ProcessEventsFile(events []Event, opts ...ProcessEventsFileOptions) Simulat
 		}
 		if opts[0].NPaths > 0 {
 			npaths = opts[0].NPaths
+		}
+		if opts[0].Rounds > 0 {
+			rounds = opts[0].Rounds
 		}
 	}
 	// Extract team names from events
@@ -68,11 +73,11 @@ func ProcessEventsFile(events []Event, opts ...ProcessEventsFileOptions) Simulat
 		req.Ratings[name] = 1.0
 	}
 	
-	return ProcessSimulation(req, generations)
+	return ProcessSimulation(req, generations, rounds)
 }
 
 // ProcessSimulation processes a simulation request and returns results
-func ProcessSimulation(req SimulationRequest, generations int) SimulationResult {
+func ProcessSimulation(req SimulationRequest, generations int, rounds int) SimulationResult {
 	teamNames := make([]string, 0, len(req.Ratings))
 	for name := range req.Ratings {
 		teamNames = append(teamNames, name)
@@ -84,7 +89,7 @@ func ProcessSimulation(req SimulationRequest, generations int) SimulationResult 
 	
 	// Calculate league table and remaining fixtures
 	leagueTable := calcLeagueTable(teamNames, req.Events, req.Handicaps)
-	remainingFixtures := calcRemainingFixtures(teamNames, req.Events)
+	remainingFixtures := calcRemainingFixtures(teamNames, req.Events, rounds)
 	
 	// Solve for ratings
 	solver := newRatingsSolver()
