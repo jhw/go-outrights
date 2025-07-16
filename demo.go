@@ -12,18 +12,15 @@ import (
 )
 
 func main() {
-	if len(os.Args) < 2 {
-		log.Fatal("Usage: go run . <filename> [--generations=N] [--npaths=N] [--rounds=N] [--debug]")
-	}
-	
-	filename := os.Args[1]
+	// Default values
+	filename := "fixtures/events.json" // Default events file
 	generations := 0 // 0 means use default
 	npaths := 0      // 0 means use default
 	rounds := 0      // 0 means use default
 	debug := false   // default false
 	
 	// Parse named arguments
-	for i := 2; i < len(os.Args); i++ {
+	for i := 1; i < len(os.Args); i++ {
 		arg := os.Args[i]
 		if strings.HasPrefix(arg, "--generations=") {
 			if g, err := strconv.Atoi(strings.TrimPrefix(arg, "--generations=")); err == nil {
@@ -45,6 +42,25 @@ func main() {
 			}
 		} else if arg == "--debug" {
 			debug = true
+		} else if strings.HasPrefix(arg, "--events=") {
+			filename = strings.TrimPrefix(arg, "--events=")
+		} else if arg == "--help" || arg == "-h" {
+			fmt.Println("Usage: go run . [--events=filename] [--generations=N] [--npaths=N] [--rounds=N] [--debug]")
+			fmt.Println()
+			fmt.Println("Options:")
+			fmt.Println("  --events=filename    Events JSON file (default: fixtures/events.json)")
+			fmt.Println("  --generations=N      Number of genetic algorithm generations (default: 1000)")
+			fmt.Println("  --npaths=N          Number of simulation paths (default: 5000)")
+			fmt.Println("  --rounds=N          Number of rounds each team plays (default: 1)")
+			fmt.Println("  --debug             Enable debug logging for genetic algorithm")
+			fmt.Println("  --help, -h          Show this help message")
+			fmt.Println()
+			fmt.Println("Examples:")
+			fmt.Println("  go run .                                    # Use default settings")
+			fmt.Println("  go run . --generations=2000 --npaths=5000   # Quick high-quality run")
+			fmt.Println("  go run . --events=fixtures/other.json       # Use different events file")
+			fmt.Println("  go run . --debug                           # Enable debug logging")
+			os.Exit(0)
 		} else {
 			log.Fatalf("Unknown argument: %s", arg)
 		}
