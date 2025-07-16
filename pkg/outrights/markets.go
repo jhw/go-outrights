@@ -63,6 +63,24 @@ func initIncludeMarket(teamNames []string, market *Market) error {
 	
 	market.Teams = make([]string, len(market.Include))
 	copy(market.Teams, market.Include)
+	
+	// Parse and validate payoff
+	if market.Payoff == "" {
+		return fmt.Errorf("market %s has no payoff defined", market.Name)
+	}
+	
+	parsedPayoff, err := parsePayoff(market.Payoff)
+	if err != nil {
+		return fmt.Errorf("error parsing payoff for market %s: %v", market.Name, err)
+	}
+	market.ParsedPayoff = parsedPayoff
+	
+	// Validate payoff length matches include teams count
+	if len(market.ParsedPayoff) != len(market.Include) {
+		return fmt.Errorf("%s include market payoff length (%d) does not match include teams count (%d)", 
+			market.Name, len(market.ParsedPayoff), len(market.Include))
+	}
+	
 	return nil
 }
 
@@ -96,13 +114,50 @@ func initExcludeMarket(teamNames []string, market *Market) error {
 			market.Teams = append(market.Teams, teamName)
 		}
 	}
+	
+	// Parse and validate payoff
+	if market.Payoff == "" {
+		return fmt.Errorf("market %s has no payoff defined", market.Name)
+	}
+	
+	parsedPayoff, err := parsePayoff(market.Payoff)
+	if err != nil {
+		return fmt.Errorf("error parsing payoff for market %s: %v", market.Name, err)
+	}
+	market.ParsedPayoff = parsedPayoff
+	
+	// Validate payoff length matches remaining teams count (total - excluded)
+	expectedLength := len(teamNames) - len(market.Exclude)
+	if len(market.ParsedPayoff) != expectedLength {
+		return fmt.Errorf("%s exclude market payoff length (%d) does not match remaining teams count (%d)", 
+			market.Name, len(market.ParsedPayoff), expectedLength)
+	}
+	
 	return nil
 }
 
-// initMarket initializes a market with all teams
-func initMarket(teamNames []string, market *Market) error {
+// initStandardMarket initializes a market with all teams
+func initStandardMarket(teamNames []string, market *Market) error {
 	market.Teams = make([]string, len(teamNames))
 	copy(market.Teams, teamNames)
+	
+	// Parse and validate payoff
+	if market.Payoff == "" {
+		return fmt.Errorf("market %s has no payoff defined", market.Name)
+	}
+	
+	parsedPayoff, err := parsePayoff(market.Payoff)
+	if err != nil {
+		return fmt.Errorf("error parsing payoff for market %s: %v", market.Name, err)
+	}
+	market.ParsedPayoff = parsedPayoff
+	
+	// Validate payoff length matches all teams count
+	if len(market.ParsedPayoff) != len(teamNames) {
+		return fmt.Errorf("%s standard market payoff length (%d) does not match total teams count (%d)", 
+			market.Name, len(market.ParsedPayoff), len(teamNames))
+	}
+	
 	return nil
 }
 
@@ -111,6 +166,11 @@ func InitMarkets(teamNames []string, markets []Market) error {
 	for i := range markets {
 		market := &markets[i]
 		
+		// Validate that market doesn't have both include and exclude
+		if len(market.Include) > 0 && len(market.Exclude) > 0 {
+			return fmt.Errorf("market %s cannot have both include and exclude fields", market.Name)
+		}
+		
 		// Initialize teams based on include/exclude
 		var err error
 		if len(market.Include) > 0 {
@@ -118,28 +178,11 @@ func InitMarkets(teamNames []string, markets []Market) error {
 		} else if len(market.Exclude) > 0 {
 			err = initExcludeMarket(teamNames, market)
 		} else {
-			err = initMarket(teamNames, market)
+			err = initStandardMarket(teamNames, market)
 		}
 		
 		if err != nil {
 			return err
-		}
-		
-		// Parse payoff string
-		if market.Payoff == "" {
-			return fmt.Errorf("market %s has no payoff defined", market.Name)
-		}
-		
-		parsedPayoff, err := parsePayoff(market.Payoff)
-		if err != nil {
-			return fmt.Errorf("error parsing payoff for market %s: %v", market.Name, err)
-		}
-		market.ParsedPayoff = parsedPayoff
-		
-		// Validate payoff length matches teams
-		if len(market.ParsedPayoff) != len(market.Teams) {
-			return fmt.Errorf("%s teams/payoff mismatch: %d teams, %d payoffs", 
-				market.Name, len(market.Teams), len(market.ParsedPayoff))
 		}
 	}
 	
