@@ -14,7 +14,7 @@ import (
 
 func main() {
 	// Default values
-	filename := "fixtures/events.json"   // Default events file
+	eventsFile := "fixtures/events.json"   // Default events file
 	marketsFile := "fixtures/markets.json" // Default markets file
 	generations := 0 // 0 means use default
 	npaths := 0      // 0 means use default
@@ -52,7 +52,7 @@ func main() {
 		} else if arg == "--debug" {
 			debug = true
 		} else if strings.HasPrefix(arg, "--events=") {
-			filename = strings.TrimPrefix(arg, "--events=")
+			eventsFile = strings.TrimPrefix(arg, "--events=")
 		} else if strings.HasPrefix(arg, "--markets=") {
 			marketsFile = strings.TrimPrefix(arg, "--markets=")
 		} else if arg == "--help" || arg == "-h" {
@@ -71,7 +71,7 @@ func main() {
 			fmt.Println("Examples:")
 			fmt.Println("  go run .                                    # Use default settings")
 			fmt.Println("  go run . --generations=2000 --npaths=5000   # Quick high-quality run")
-			fmt.Println("  go run . --events=fixtures/other.json       # Use different events file")
+			fmt.Println("  go run . --events=fixtures/other.json      # Use different events file")
 			fmt.Println("  go run . --markets=fixtures/other.json      # Use different markets file")
 			fmt.Println("  go run . --debug                           # Enable debug logging")
 			os.Exit(0)
@@ -81,7 +81,7 @@ func main() {
 	}
 	
 	// Read and parse the events JSON file
-	data, err := os.ReadFile(filename)
+	data, err := os.ReadFile(eventsFile)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -102,7 +102,7 @@ func main() {
 		log.Fatal(err)
 	}
 	
-	log.Printf("Processing %s with %d events", filename, len(events))
+	log.Printf("Processing %s with %d events", eventsFile, len(events))
 	log.Printf("Loaded %d markets from %s", len(markets), marketsFile)
 	log.Println("Starting simulation...")
 	
