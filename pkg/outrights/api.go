@@ -233,6 +233,15 @@ func ProcessSimulation(req SimulationRequest, generations int, rounds int, debug
 	// Calculate position probabilities for markets
 	positionProbabilities := calcPositionProbabilities(simPoints, req.Markets)
 	
+	// Assign position probabilities to teams
+	if defaultProbs, exists := positionProbabilities["default"]; exists {
+		for i := range leagueTable {
+			if teamProbs, exists := defaultProbs[leagueTable[i].Name]; exists {
+				leagueTable[i].PositionProbabilities = teamProbs
+			}
+		}
+	}
+	
 	// Calculate outright marks
 	outrightMarks := calcOutrightMarks(positionProbabilities, req.Markets)
 	

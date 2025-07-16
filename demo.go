@@ -135,6 +135,25 @@ func main() {
 	}
 	
 	log.Println()
+	log.Println("Position Probabilities:")
+	log.Println("Team            \tPosition Probabilities")
+	log.Println("----            \t----------------------")
+	for _, team := range result.Teams {
+		teamName := team.Name
+		if len(teamName) > 16 {
+			teamName = teamName[:16]
+		}
+		log.Printf("%-16s\t", teamName)
+		
+		for i, prob := range team.PositionProbabilities {
+			if prob > 0.001 { // Only show probabilities > 0.1%
+				log.Printf("P%d:%.3f ", i+1, prob)
+			}
+		}
+		log.Println()
+	}
+	
+	log.Println()
 	log.Println("Outright marks:")
 	// Group marks by market and filter out zeros
 	marketGroups := make(map[string][]outrights.OutrightMark)
