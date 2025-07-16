@@ -98,15 +98,14 @@ func main() {
 	log.Println("Starting simulation...")
 	
 	// Create options struct with overrides
-	opts := outrights.ProcessEventsFileOptions{
+	opts := outrights.SimOptions{
 		Generations: generations,
 		NPaths:      npaths,
 		Rounds:      rounds,
 		Debug:       debug,
-		Markets:     markets,
 	}
 	
-	result := outrights.ProcessEventsFile(events, opts)
+	result := outrights.Simulate(events, markets, opts)
 	
 	log.Printf("Home advantage: %.4f, Solver error: %.6f", result.HomeAdvantage, result.SolverError)
 	log.Println()

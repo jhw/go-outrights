@@ -5,23 +5,21 @@ import (
 	"sort"
 )
 
-// ProcessEventsFileOptions holds optional configuration for ProcessEventsFile
-type ProcessEventsFileOptions struct {
+// SimOptions holds optional configuration for Simulate
+type SimOptions struct {
 	Generations int
 	NPaths      int
 	Rounds      int
 	Debug       bool
-	Markets     []Market
 }
 
-// ProcessEventsFile processes a JSON file containing events and returns simulation results
-func ProcessEventsFile(events []Event, opts ...ProcessEventsFileOptions) SimulationResult {
+// Simulate processes events and markets and returns simulation results
+func Simulate(events []Event, markets []Market, opts ...SimOptions) SimulationResult {
 	// Set defaults
 	generations := 1000
 	npaths := 5000
 	rounds := 1
 	debug := false
-	var markets []Market
 	
 	// Override with provided options
 	if len(opts) > 0 {
@@ -35,7 +33,6 @@ func ProcessEventsFile(events []Event, opts ...ProcessEventsFileOptions) Simulat
 			rounds = opts[0].Rounds
 		}
 		debug = opts[0].Debug
-		markets = opts[0].Markets
 	}
 	// Extract team names from events
 	teamNamesMap := make(map[string]bool)

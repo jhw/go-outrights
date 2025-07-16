@@ -28,7 +28,7 @@ events := []outrights.Event{
 }
 
 // Process with default settings
-result := outrights.ProcessEventsFile(events)
+result := outrights.Simulate(events, markets)
 
 // Access results
 for _, team := range result.Teams {
@@ -41,12 +41,12 @@ for _, team := range result.Teams {
 
 ```go
 // Custom parameters
-opts := outrights.ProcessEventsFileOptions{
+opts := outrights.SimOptions{
     Generations: 2000,  // More iterations for better accuracy
     NPaths:      10000, // More simulation paths
 }
 
-result := outrights.ProcessEventsFile(events, opts)
+result := outrights.Simulate(events, markets, opts)
 ```
 
 ### CLI Usage
@@ -63,7 +63,7 @@ go run . events.json --generations=2000 --npaths=10000
 
 ### Main Functions
 
-- `ProcessEventsFile(events []Event, opts ...ProcessEventsFileOptions) SimulationResult`
+- `Simulate(events []Event, markets []Market, opts ...SimOptions) SimulationResult`
 - `ProcessSimulation(req SimulationRequest, generations int) SimulationResult`
 
 ### Key Types
