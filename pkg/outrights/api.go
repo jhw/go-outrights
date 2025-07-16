@@ -7,21 +7,6 @@ import (
 	"sort"
 )
 
-// SimOptions holds optional configuration for Simulate
-type SimOptions struct {
-	Generations          int
-	NPaths               int
-	Rounds               int
-	TrainingSetSize      int
-	PopulationSize       int
-	MutationFactor       float64
-	EliteRatio           float64
-	InitStd              float64
-	LogInterval          int
-	DecayExponent        float64
-	MutationProbability  float64
-	Debug                bool
-}
 
 // Simulate processes events and markets and returns simulation results
 func Simulate(events []Event, markets []Market, handicaps map[string]int, opts ...SimOptions) (SimulationResult, error) {

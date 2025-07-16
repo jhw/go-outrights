@@ -1,5 +1,20 @@
 package outrights
 
+// SimOptions holds optional configuration for Simulate
+type SimOptions struct {
+	Generations          int
+	NPaths               int
+	Rounds               int
+	TrainingSetSize      int
+	PopulationSize       int
+	MutationFactor       float64
+	EliteRatio           float64
+	InitStd              float64
+	LogInterval          int
+	DecayExponent        float64
+	MutationProbability  float64
+	Debug                bool
+}
 
 type MatchOdds struct {
 	Prices []float64 `json:"prices"`
