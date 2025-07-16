@@ -59,7 +59,7 @@ func Simulate(events []Event, markets []Market, opts ...SimOptions) SimulationRe
 		Ratings:         make(map[string]float64),
 		TrainingSet:     trainingEvents,
 		Events:          predictionEvents,
-		Handicaps:       make(map[string]float64),
+		Handicaps:       make(map[string]int),
 		Markets:         markets,
 		PopulationSize:  8,
 		MutationFactor:  0.1,
@@ -278,7 +278,7 @@ func calcPPGRatings(teamNames []string, ratings map[string]float64, homeAdvantag
 	return ppgRatings
 }
 
-func calcExpectedSeasonPoints(teamNames []string, events []Event, handicaps map[string]float64, 
+func calcExpectedSeasonPoints(teamNames []string, events []Event, handicaps map[string]int, 
 	remainingFixtures []string, ratings map[string]float64, homeAdvantage float64) map[string]float64 {
 	
 	// Start with current league table points
@@ -286,7 +286,7 @@ func calcExpectedSeasonPoints(teamNames []string, events []Event, handicaps map[
 	expPoints := make(map[string]float64)
 	
 	for _, team := range leagueTable {
-		expPoints[team.Name] = team.Points
+		expPoints[team.Name] = float64(team.Points)
 	}
 	
 	// Add expected points from remaining fixtures

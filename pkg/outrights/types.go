@@ -23,7 +23,7 @@ type Market struct {
 
 type Team struct {
 	Name                   string    `json:"name"`
-	Points                 float64   `json:"points"`
+	Points                 int       `json:"points"`
 	GoalDifference         int       `json:"goal_difference"`
 	Played                 int       `json:"played"`
 	PointsPerGameRating    float64   `json:"points_per_game_rating"`
@@ -52,7 +52,7 @@ type SimulationRequest struct {
 	Ratings     map[string]float64 `json:"ratings"`
 	TrainingSet []Event            `json:"training_set"`
 	Events      []Event            `json:"events"`
-	Handicaps   map[string]float64 `json:"handicaps"`
+	Handicaps   map[string]int     `json:"handicaps"`
 	Markets     []Market           `json:"markets"`
 	
 	// Solver parameters

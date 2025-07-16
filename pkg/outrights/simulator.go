@@ -23,7 +23,7 @@ func newSimPoints(leagueTable []Team, nPaths int) *SimPoints {
 		sp.Points[i] = make([]float64, nPaths)
 		
 		// Initialize with current points + small adjustments for goal difference and noise
-		pointsWithAdjustments := team.Points + 
+		pointsWithAdjustments := float64(team.Points) + 
 			GDMultiplier*float64(team.GoalDifference) + 
 			NoiseMultiplier*(rand.Float64()-0.5)
 		

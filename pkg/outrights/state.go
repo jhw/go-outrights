@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-func calcLeagueTable(teamNames []string, events []Event, handicaps map[string]float64) []Team {
+func calcLeagueTable(teamNames []string, events []Event, handicaps map[string]int) []Team {
 	teams := make(map[string]*Team)
 	
 	// Initialize teams

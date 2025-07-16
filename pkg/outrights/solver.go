@@ -281,7 +281,7 @@ func (rs *RatingsSolver) optimizeRatingsAndBias(events []Event, ratings map[stri
 }
 
 func (rs *RatingsSolver) initializeRatingsFromLeagueTable(teamNames []string, events []Event) map[string]float64 {
-	leagueTable := calcLeagueTable(teamNames, events, make(map[string]float64))
+	leagueTable := calcLeagueTable(teamNames, events, make(map[string]int))
 	
 	// Check if we have any results
 	hasResults := false
@@ -316,7 +316,7 @@ func (rs *RatingsSolver) initializeRatingsFromLeagueTable(teamNames []string, ev
 	}
 	
 	topTeam := leagueTable[0]
-	log.Printf("Initialized ratings from league table: %s (%.1f pts) = %.2f", 
+	log.Printf("Initialized ratings from league table: %s (%d pts) = %.2f", 
 		topTeam.Name, topTeam.Points, ratings[topTeam.Name])
 	
 	return ratings

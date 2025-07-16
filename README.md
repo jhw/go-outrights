@@ -84,7 +84,7 @@ type SimulationResult struct {
 
 type Team struct {
     Name                  string    `json:"name"`
-    Points                float64   `json:"points"`
+    Points                int       `json:"points"`
     PointsPerGameRating   float64   `json:"points_per_game_rating"`
     PoissonRating         float64   `json:"poisson_rating"`
     ExpectedSeasonPoints  float64   `json:"expected_season_points"`

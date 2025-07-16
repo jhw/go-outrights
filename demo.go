@@ -111,13 +111,23 @@ func main() {
 	log.Println()
 	log.Println("Teams (sorted by points per game rating):")
 	for _, team := range result.Teams {
-		log.Printf("- %s: %.1f pts (%d played, %+d GD), PPG rating: %.3f, Poisson rating: %.3f, Expected season: %.1f pts", 
+		log.Printf("- %s: %d pts (%d played, %+d GD), PPG rating: %.3f, Poisson rating: %.3f, Expected season: %.1f pts", 
 			team.Name, team.Points, team.Played, team.GoalDifference, team.PointsPerGameRating, team.PoissonRating, team.ExpectedSeasonPoints)
 	}
 	
 	log.Println()
 	log.Println("Outright marks:")
+	// Group marks by market
+	marketGroups := make(map[string][]outrights.OutrightMark)
 	for _, mark := range result.OutrightMarks {
-		log.Printf("- %s: %.3f", mark.Team, mark.Mark)
+		marketGroups[mark.Market] = append(marketGroups[mark.Market], mark)
+	}
+	
+	// Print marks grouped by market
+	for marketName, marks := range marketGroups {
+		log.Printf("%s:", marketName)
+		for _, mark := range marks {
+			log.Printf("  - %s: %.3f", mark.Team, mark.Mark)
+		}
 	}
 }
