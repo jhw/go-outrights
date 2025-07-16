@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"sort"
+	"strings"
 )
 
 
@@ -379,13 +380,36 @@ func calcExpectedSeasonPoints(teamNames []string, events []Event, handicaps map[
 func calcPositionProbabilities(simPoints *SimPoints, markets []Market) map[string]map[string][]float64 {
 	positionProbs := make(map[string]map[string][]float64)
 	
+	// Cache to avoid duplicate calculations for same team sets
+	cache := make(map[string]map[string][]float64)
+	
+	// Helper function to get cache key from team names
+	getCacheKey := func(teamNames []string) string {
+		if teamNames == nil {
+			return "default"
+		}
+		// Sort team names for consistent cache key
+		sorted := make([]string, len(teamNames))
+		copy(sorted, teamNames)
+		sort.Strings(sorted)
+		return strings.Join(sorted, ",")
+	}
+	
 	// Default probabilities for all teams
-	positionProbs["default"] = simPoints.positionProbabilities(nil)
+	defaultKey := getCacheKey(nil)
+	if _, exists := cache[defaultKey]; !exists {
+		cache[defaultKey] = simPoints.positionProbabilities(nil)
+	}
+	positionProbs["default"] = cache[defaultKey]
 	
 	// Market-specific probabilities
 	for _, market := range markets {
 		if len(market.Teams) > 0 {
-			positionProbs[market.Name] = simPoints.positionProbabilities(market.Teams)
+			cacheKey := getCacheKey(market.Teams)
+			if _, exists := cache[cacheKey]; !exists {
+				cache[cacheKey] = simPoints.positionProbabilities(market.Teams)
+			}
+			positionProbs[market.Name] = cache[cacheKey]
 		}
 	}
 	
