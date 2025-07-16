@@ -11,7 +11,7 @@ import (
 const (
 	RatingMin = 0.0
 	RatingMax = 6.0
-	HomeAdvantageMin = 1.0
+	HomeAdvantageMin = 0.0
 	HomeAdvantageMax = 1.5
 )
 
