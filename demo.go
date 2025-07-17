@@ -14,8 +14,8 @@ import (
 
 func main() {
 	// Default values
-	eventsFile := "fixtures/events.json"   // Default events file
-	marketsFile := "fixtures/markets.json" // Default markets file
+	eventsFile := "fixtures/ENG1-events.json"   // Default events file
+	marketsFile := "fixtures/ENG1-markets.json" // Default markets file
 	generations := 0 // 0 means use default
 	npaths := 0      // 0 means use default
 	rounds := 0      // 0 means use default
@@ -59,8 +59,8 @@ func main() {
 			fmt.Println("Usage: go run . [--events=filename] [--markets=filename] [--generations=N] [--npaths=N] [--rounds=N] [--training-set-size=N] [--debug]")
 			fmt.Println()
 			fmt.Println("Options:")
-			fmt.Println("  --events=filename       Events JSON file (default: fixtures/events.json)")
-			fmt.Println("  --markets=filename      Markets JSON file (default: fixtures/markets.json)")
+			fmt.Println("  --events=filename       Events JSON file (default: fixtures/ENG1-events.json)")
+			fmt.Println("  --markets=filename      Markets JSON file (default: fixtures/ENG1-markets.json)")
 			fmt.Println("  --generations=N         Number of genetic algorithm generations (default: 1000)")
 			fmt.Println("  --npaths=N             Number of simulation paths (default: 5000)")
 			fmt.Println("  --rounds=N             Number of rounds each team plays (default: 1)")
