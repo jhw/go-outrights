@@ -30,7 +30,7 @@ type Event struct {
 type Market struct {
 	Name         string    `json:"name"`
 	Payoff       string    `json:"payoff"`
-	ParsedPayoff []int     `json:"-"` // Parsed version, not serialized
+	ParsedPayoff []float64 `json:"-"` // Parsed version, not serialized
 	Teams        []string  `json:"teams,omitempty"`
 	Include      []string  `json:"include,omitempty"`
 	Exclude      []string  `json:"exclude,omitempty"`

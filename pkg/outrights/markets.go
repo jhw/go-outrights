@@ -6,26 +6,26 @@ import (
 	"strings"
 )
 
-// parsePayoff parses payoff expressions like "1|19x0" meaning 1 winner gets 1, 19 losers get 0
-func parsePayoff(payoffExpr string) ([]int, error) {
-	var payoff []int
+// parsePayoff parses payoff expressions like "1|4x0.25|19x0" meaning 1 winner gets 1, 4 get 0.25, 19 losers get 0
+func parsePayoff(payoffExpr string) ([]float64, error) {
+	var payoff []float64
 	
 	for _, expr := range strings.Split(payoffExpr, "|") {
 		tokens := strings.Split(expr, "x")
 		
 		var n int
-		var v int
+		var v float64
 		var err error
 		
 		if len(tokens) == 1 {
 			// Single value, assume n=1
 			n = 1
-			v, err = strconv.Atoi(tokens[0])
+			v, err = strconv.ParseFloat(tokens[0], 64)
 		} else if len(tokens) == 2 {
 			// n and value
 			var err1 error
 			n, err1 = strconv.Atoi(tokens[0])
-			v, err = strconv.Atoi(tokens[1])
+			v, err = strconv.ParseFloat(tokens[1], 64)
 			if err1 != nil || err != nil {
 				return nil, fmt.Errorf("invalid payoff format: %s", expr)
 			}

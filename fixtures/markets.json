@@ -1,2 +1,2 @@
-[{"name": "Winner", "payoff": "1|19x0"},
- {"name": "Relegation", "payoff": "17x0|3x1"}]
+[{"name": "Winner", "payoff": "1.0|19x0"},
+ {"name": "Relegation", "payoff": "17x0|3x1.0"}]
