@@ -46,6 +46,13 @@ for _, team := range result.Teams {
     fmt.Printf("%s: PPG=%.3f, Poisson=%.3f\n", 
         team.Name, team.PointsPerGameRating, team.PoissonRating)
 }
+
+// Access fixture odds for all possible matchups
+for _, fixture := range result.FixtureOdds {
+    fmt.Printf("%s: Home=%.3f, Draw=%.3f, Away=%.3f\n",
+        fixture.Fixture, fixture.Probabilities[0], 
+        fixture.Probabilities[1], fixture.Probabilities[2])
+}
 ```
 
 ### Advanced Configuration

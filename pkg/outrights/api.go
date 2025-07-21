@@ -246,9 +246,13 @@ func ProcessSimulation(req SimulationRequest, generations int, rounds int, debug
 	// Calculate outright marks
 	outrightMarks := calcOutrightMarks(positionProbabilities, req.Markets)
 	
+	// Calculate fixture odds for all possible team matchups
+	fixtureOdds := calcAllFixtureOdds(teamNames, poissonRatings, homeAdvantage)
+	
 	return SimulationResult{
 		Teams:         leagueTable,
 		OutrightMarks: outrightMarks,
+		FixtureOdds:   fixtureOdds,
 		HomeAdvantage: homeAdvantage,
 		SolverError:   solverError,
 	}, nil

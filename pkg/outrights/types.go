@@ -56,9 +56,15 @@ type OutrightMark struct {
 	Mark   float64 `json:"mark"`
 }
 
+type FixtureOdds struct {
+	Fixture       string     `json:"fixture"`        // "Home Team vs Away Team"
+	Probabilities [3]float64 `json:"probabilities"`  // [home_win, draw, away_win]
+}
+
 type SimulationResult struct {
 	Teams           []Team         `json:"teams"`
 	OutrightMarks   []OutrightMark `json:"outright_marks"`
+	FixtureOdds     []FixtureOdds  `json:"fixture_odds"`
 	HomeAdvantage   float64        `json:"home_advantage"`
 	SolverError     float64        `json:"solver_error"`
 }

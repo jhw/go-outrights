@@ -1,6 +1,7 @@
 package outrights
 
 import (
+	"fmt"
 	"sort"
 	"strings"
 )
@@ -75,4 +76,36 @@ func calcOutrightMarks(positionProbabilities map[string]map[string][]float64, ma
 	}
 	
 	return marks
+}
+
+// calcAllFixtureOdds calculates match odds for all possible team matchups in the league
+func calcAllFixtureOdds(teamNames []string, ratings map[string]float64, homeAdvantage float64) []FixtureOdds {
+	var fixtureOdds []FixtureOdds
+	
+	// Generate odds for all team combinations (n * (n-1) fixtures)
+	for i, homeTeam := range teamNames {
+		for j, awayTeam := range teamNames {
+			if i != j { // Skip same team vs same team
+				fixture := fmt.Sprintf("%s vs %s", homeTeam, awayTeam)
+				
+				// Create score matrix for this matchup
+				matrix := newScoreMatrix(fixture, ratings, homeAdvantage)
+				
+				// Get match probabilities [home_win, draw, away_win]
+				probabilities := matrix.matchOdds()
+				
+				fixtureOdds = append(fixtureOdds, FixtureOdds{
+					Fixture:       fixture,
+					Probabilities: [3]float64{probabilities[0], probabilities[1], probabilities[2]},
+				})
+			}
+		}
+	}
+	
+	// Sort by fixture name for consistent output
+	sort.Slice(fixtureOdds, func(i, j int) bool {
+		return fixtureOdds[i].Fixture < fixtureOdds[j].Fixture
+	})
+	
+	return fixtureOdds
 }
