@@ -24,7 +24,8 @@ func calcPPGRatings(teamNames []string, ratings map[string]float64, homeAdvantag
 	}
 	
 	// Normalize by total number of games each team plays
-	totalGames := float64(len(teamNames) - 1)
+	// Each team plays against every other team both home and away
+	totalGames := float64(2 * (len(teamNames) - 1))
 	for name := range ppgRatings {
 		ppgRatings[name] /= totalGames
 	}
