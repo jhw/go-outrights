@@ -134,47 +134,153 @@ func main() {
 			teamName, team.Points, team.Played, team.GoalDifference, team.PointsPerGameRating, team.PoissonRating, team.ExpectedSeasonPoints, team.TrainingEvents, team.MeanTrainingError, team.StdTrainingError)
 	}
 	
-	log.Println()
-	log.Println("Position Probabilities:")
-	log.Println("Team            \tPosition Probabilities")
-	log.Println("----            \t----------------------")
-	for _, team := range result.Teams {
-		teamName := team.Name
-		if len(teamName) > 16 {
-			teamName = teamName[:16]
-		}
-		log.Printf("%-16s\t", teamName)
-		
-		for i, prob := range team.PositionProbabilities {
-			if prob > 0.001 { // Only show probabilities > 0.1%
-				log.Printf("P%d:%.3f ", i+1, prob)
-			}
-		}
-		log.Println()
+	
+	// Display marks table
+	displayMarksTables(&result)
+}
+
+// truncateString truncates a string to maxLen characters, adding "..." if truncated
+func truncateString(s string, maxLen int) string {
+	if len(s) <= maxLen {
+		return s
+	}
+	if maxLen <= 3 {
+		return s[:maxLen]
+	}
+	return s[:maxLen-3] + "..."
+}
+
+// compactMarketName converts market names to compact versions for table display
+func compactMarketName(name string, maxLen int) string {
+	// Common abbreviations for betting markets
+	abbreviations := map[string]string{
+		"Winner":                    "Win",
+		"Relegation":                "Rlg",
+		"To Stay Up":               "Stay",
+		"Top Two":                  "T2",
+		"Top Three":                "T3", 
+		"Top Four":                 "T4",
+		"Top Six":                  "T6",
+		"Top Seven":                "T7",
+		"Top Half":                 "TH",
+		"Bottom Half":              "BH",
+		"Outside Top Four":         "OT4",
+		"Outside Top Six":          "OT6",
+		"Bottom":                   "Bot",
+		"Without Big Seven":        "WB7",
+		"Without Man City":         "WMC",
+		"Top London Club":          "TLC",
 	}
 	
-	log.Println()
-	log.Println("Outright marks:")
-	// Group marks by market and filter out zeros
-	marketGroups := make(map[string][]outrights.OutrightMark)
+	// Check for exact match first
+	if abbrev, exists := abbreviations[name]; exists {
+		return abbrev
+	}
+	
+	// If no abbreviation found, truncate
+	return truncateString(name, maxLen)
+}
+
+// displayMarksTables displays marks in a formatted table
+func displayMarksTables(result *outrights.SimulationResult) {
+	// Group marks by team
+	teamMarks := make(map[string]map[string]float64)
+	marketNames := make(map[string]bool)
+	
 	for _, mark := range result.OutrightMarks {
 		if mark.Mark > 0 { // Only include non-zero marks
-			marketGroups[mark.Market] = append(marketGroups[mark.Market], mark)
+			if teamMarks[mark.Team] == nil {
+				teamMarks[mark.Team] = make(map[string]float64)
+			}
+			teamMarks[mark.Team][mark.Market] = mark.Mark
+			marketNames[mark.Market] = true
 		}
 	}
 	
-	// Print marks grouped by market
-	for marketName, marks := range marketGroups {
-		if len(marks) > 0 { // Only print markets with non-zero marks
-			// Sort marks by value (descending)
-			sort.Slice(marks, func(i, j int) bool {
-				return marks[i].Mark > marks[j].Mark
-			})
-			
-			log.Printf("%s:", marketName)
-			for _, mark := range marks {
-				log.Printf("  - %s: %.3f", mark.Team, mark.Mark)
+	if len(teamMarks) == 0 {
+		log.Println("No marks to display")
+		return
+	}
+	
+	// Create ordered list of markets
+	var markets []string
+	for market := range marketNames {
+		markets = append(markets, market)
+	}
+	sort.Strings(markets)
+	
+	// Create team lookup for expected points
+	teamExpPoints := make(map[string]float64)
+	for _, team := range result.Teams {
+		teamExpPoints[team.Name] = team.ExpectedSeasonPoints
+	}
+	
+	log.Println()
+	log.Println("📊 MARK VALUES TABLE")
+	
+	// Calculate table width
+	headerWidth := 13 + 1 + 6 // Team name + space + Expected Points columns
+	for range markets {
+		headerWidth += 7 // 6 chars + 1 space per market
+	}
+	
+	// Print top border
+	for i := 0; i < headerWidth; i++ {
+		fmt.Print("═")
+	}
+	fmt.Println()
+	
+	// Print header
+	fmt.Print("Team          ExpPts")
+	for _, market := range markets {
+		compactName := compactMarketName(market, 6)
+		fmt.Printf(" %6s", compactName)
+	}
+	fmt.Println()
+	
+	// Print header separator
+	fmt.Print("─────────────  ─────")
+	for range markets {
+		fmt.Print(" ──────")
+	}
+	fmt.Println()
+	
+	// Create list of teams sorted by expected points (descending)
+	type teamData struct {
+		name string
+		expPoints float64
+	}
+	
+	var teams []teamData
+	for teamName := range teamMarks {
+		teams = append(teams, teamData{
+			name: teamName,
+			expPoints: teamExpPoints[teamName],
+		})
+	}
+	
+	sort.Slice(teams, func(i, j int) bool {
+		return teams[i].expPoints > teams[j].expPoints
+	})
+	
+	// Print data rows
+	for _, team := range teams {
+		teamName := truncateString(team.name, 13)
+		fmt.Printf("%-13s %6.1f", teamName, team.expPoints)
+		
+		for _, market := range markets {
+			if mark, exists := teamMarks[team.name][market]; exists {
+				fmt.Printf(" %6.3f", mark)
+			} else {
+				fmt.Print("       ") // Empty cell for no mark (7 spaces to match " %6.3f")
 			}
 		}
+		fmt.Println()
 	}
+	
+	// Print bottom border
+	for i := 0; i < headerWidth; i++ {
+		fmt.Print("═")
+	}
+	fmt.Println()
 }
