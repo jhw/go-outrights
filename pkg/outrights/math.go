@@ -102,10 +102,10 @@ func sumProduct(x, y []float64) float64 {
 	return sum
 }
 
-// calculateTimeWeight calculates power-based time weighting for events
+// calculateTimePowerWeight calculates time power weighting for events
 // Most recent event gets weight 1.0, oldest gets weight 0.0
 // Power controls the decay curve: 1.0 = linear, >1 = faster decay, <1 = slower decay
-func calculateTimeWeight(eventIndex, totalEvents int, power float64) float64 {
+func calculateTimePowerWeight(eventIndex, totalEvents int, power float64) float64 {
 	if totalEvents <= 1 {
 		return 1.0
 	}

@@ -189,7 +189,7 @@ func (rs *RatingsSolver) calcError(events []Event, ratings map[string]float64, h
 		marketProbs := extractMarketProbabilities(event)
 		
 		error := rmsError(modelOdds, marketProbs)
-		weight := calculateTimeWeight(i, len(events), timePowerWeighting)
+		weight := calculateTimePowerWeight(i, len(events), timePowerWeighting)
 		
 		totalWeightedError += error * weight
 		totalWeight += weight
