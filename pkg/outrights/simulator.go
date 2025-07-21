@@ -8,27 +8,27 @@ import (
 type SimPoints struct {
 	NPaths         int
 	TeamNames      []string
-	Points         [][]float64
-	GoalDifference [][]float64
+	Points         [][]int
+	GoalDifference [][]int
 }
 
 func newSimPoints(leagueTable []Team, nPaths int) *SimPoints {
 	sp := &SimPoints{
 		NPaths:         nPaths,
 		TeamNames:      make([]string, len(leagueTable)),
-		Points:         make([][]float64, len(leagueTable)),
-		GoalDifference: make([][]float64, len(leagueTable)),
+		Points:         make([][]int, len(leagueTable)),
+		GoalDifference: make([][]int, len(leagueTable)),
 	}
 	
 	for i, team := range leagueTable {
 		sp.TeamNames[i] = team.Name
-		sp.Points[i] = make([]float64, nPaths)
-		sp.GoalDifference[i] = make([]float64, nPaths)
+		sp.Points[i] = make([]int, nPaths)
+		sp.GoalDifference[i] = make([]int, nPaths)
 		
-		// Initialize with current points + noise
-		pointsWithNoise := float64(team.Points) + NoiseMultiplier*(rand.Float64()-0.5)
-		// Initialize with current goal difference + noise
-		gdWithNoise := float64(team.GoalDifference) + NoiseMultiplier*(rand.Float64()-0.5)
+		// Initialize with current points (small random variation for tie-breaking)
+		pointsWithNoise := team.Points + int(NoiseMultiplier*10*(rand.Float64()-0.5))
+		// Initialize with current goal difference (small random variation for tie-breaking)
+		gdWithNoise := team.GoalDifference + int(NoiseMultiplier*10*(rand.Float64()-0.5))
 		
 		for j := 0; j < nPaths; j++ {
 			sp.Points[i][j] = pointsWithNoise
@@ -65,15 +65,15 @@ func (sp *SimPoints) updateHomeTeam(teamName string, scores [][]int) {
 		awayGoals := score[1]
 		
 		// Calculate points
-		points := 0.0
+		points := 0
 		if homeGoals > awayGoals {
-			points = 3.0
+			points = 3
 		} else if homeGoals == awayGoals {
-			points = 1.0
+			points = 1
 		}
 		
 		// Calculate goal difference
-		goalDifference := float64(homeGoals - awayGoals)
+		goalDifference := homeGoals - awayGoals
 		
 		// Update points and goal difference separately
 		sp.Points[teamIndex][i] += points
@@ -92,15 +92,15 @@ func (sp *SimPoints) updateAwayTeam(teamName string, scores [][]int) {
 		awayGoals := score[1]
 		
 		// Calculate points
-		points := 0.0
+		points := 0
 		if awayGoals > homeGoals {
-			points = 3.0
+			points = 3
 		} else if homeGoals == awayGoals {
-			points = 1.0
+			points = 1
 		}
 		
 		// Calculate goal difference
-		goalDifference := float64(awayGoals - homeGoals)
+		goalDifference := awayGoals - homeGoals
 		
 		// Update points and goal difference separately
 		sp.Points[teamIndex][i] += points
@@ -132,8 +132,8 @@ func (sp *SimPoints) positionProbabilities(teamNames []string) map[string][]floa
 	}
 	
 	// Extract points and goal difference for selected teams
-	selectedPoints := make([][]float64, len(selectedIndices))
-	selectedGoalDifference := make([][]float64, len(selectedIndices))
+	selectedPoints := make([][]int, len(selectedIndices))
+	selectedGoalDifference := make([][]int, len(selectedIndices))
 	for i, idx := range selectedIndices {
 		selectedPoints[i] = sp.Points[idx]
 		selectedGoalDifference[i] = sp.GoalDifference[idx]
@@ -149,15 +149,15 @@ func (sp *SimPoints) positionProbabilities(teamNames []string) map[string][]floa
 		// Create array of team data for this path
 		teamData := make([]struct {
 			TeamIndex int
-			Points    float64
-			GD        float64
+			Points    int
+			GD        int
 		}, len(selectedIndices))
 		
 		for i := range selectedIndices {
 			teamData[i] = struct {
 				TeamIndex int
-				Points    float64
-				GD        float64
+				Points    int
+				GD        int
 			}{
 				TeamIndex: i,
 				Points:    selectedPoints[i][path],
