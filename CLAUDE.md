@@ -54,7 +54,7 @@ When analyzing or searching the codebase, ignore these files and patterns:
   - `api.go`: Main simulation orchestration
   - `solver.go`: Genetic algorithm optimization
   - `simulator.go`: Monte Carlo simulation
-  - `kernel.go`: Score matrix and probability calculations
+  - `matrix.go`: Score matrix and probability calculations
   - `math.go`: Mathematical utility functions (Poisson, statistics)
   - `state.go`: League table management
   - `markets.go`: Betting market handling
@@ -77,5 +77,5 @@ When analyzing or searching the codebase, ignore these files and patterns:
 
 - To add new betting markets: Update `ENG1-markets.json`
 - To modify team ratings: See `solver.go` genetic algorithm
-- To adjust simulation parameters: Update constants in `kernel.go`
+- To adjust simulation parameters: Update constants in `matrix.go`
 - To add mathematical functions: Add to `math.go` module

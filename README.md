@@ -250,7 +250,7 @@ The API validates:
 - **`pkg/outrights/api.go`**: Main API functions and orchestration
 - **`pkg/outrights/solver.go`**: Genetic algorithm optimization engine
 - **`pkg/outrights/simulator.go`**: Monte Carlo simulation for remaining fixtures
-- **`pkg/outrights/kernel.go`**: Core Poisson probability calculations
+- **`pkg/outrights/matrix.go`**: Core Poisson probability calculations
 - **`pkg/outrights/state.go`**: League table and fixture management
 - **`pkg/outrights/types.go`**: Data structures and API contracts (Event, Market, Team, SimOptions, etc.)
 - **`pkg/outrights/markets.go`**: Market validation and initialization
