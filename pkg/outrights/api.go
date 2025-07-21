@@ -201,9 +201,11 @@ func ProcessSimulation(req SimulationRequest, generations int, rounds int, debug
 	// Calculate position probabilities
 	// positionProbs := calcPositionProbabilities(simPoints, req.Markets)
 	
-	// Calculate PPG ratings and expected points
+	// Calculate PPG ratings 
 	ppgRatings := calcPPGRatings(teamNames, poissonRatings, homeAdvantage)
-	expectedPoints := calcExpectedSeasonPoints(teamNames, req.Events, req.Handicaps, remainingFixtures, poissonRatings, homeAdvantage)
+	
+	// Calculate expected points from the actual simulation results (not deterministic calculation)
+	expectedPoints := simPoints.calculateExpectedSeasonPoints()
 	
 	// Update league table with ratings and expected points
 	for i := range leagueTable {
@@ -325,6 +327,10 @@ func calcPPGRatings(teamNames []string, ratings map[string]float64, homeAdvantag
 	return ppgRatings
 }
 
+// DEPRECATED: calcExpectedSeasonPoints - replaced with SimPoints.calculateExpectedSeasonPoints()
+// This function calculated expected points deterministically rather than from simulation results
+// Keeping for reference but no longer used
+/*
 func calcExpectedSeasonPoints(teamNames []string, events []Event, handicaps map[string]int, 
 	remainingFixtures []string, ratings map[string]float64, homeAdvantage float64) map[string]float64 {
 	
@@ -349,6 +355,7 @@ func calcExpectedSeasonPoints(teamNames []string, events []Event, handicaps map[
 	
 	return expPoints
 }
+*/
 
 func calcPositionProbabilities(simPoints *SimPoints, markets []Market) map[string]map[string][]float64 {
 	positionProbs := make(map[string]map[string][]float64)
