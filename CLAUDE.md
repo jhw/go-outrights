@@ -56,8 +56,10 @@ When analyzing or searching the codebase, ignore these files and patterns:
   - `simulator.go`: Monte Carlo simulation
   - `matrix.go`: Score matrix and probability calculations
   - `math.go`: Mathematical utility functions (Poisson, statistics)
+  - `team_metrics.go`: Team-specific calculations (PPG ratings, training errors)
+  - `marks.go`: Betting market marks and position probability calculations
   - `state.go`: League table management
-  - `markets.go`: Betting market handling
+  - `markets.go`: Betting market handling and payoff parsing
   - `types.go`: Data structures and contracts
 
 - **fixtures/**: Test data and configuration files
