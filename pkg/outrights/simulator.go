@@ -6,29 +6,33 @@ import (
 )
 
 type SimPoints struct {
-	NPaths    int
-	TeamNames []string
-	Points    [][]float64
+	NPaths         int
+	TeamNames      []string
+	Points         [][]float64
+	GoalDifference [][]float64
 }
 
 func newSimPoints(leagueTable []Team, nPaths int) *SimPoints {
 	sp := &SimPoints{
-		NPaths:    nPaths,
-		TeamNames: make([]string, len(leagueTable)),
-		Points:    make([][]float64, len(leagueTable)),
+		NPaths:         nPaths,
+		TeamNames:      make([]string, len(leagueTable)),
+		Points:         make([][]float64, len(leagueTable)),
+		GoalDifference: make([][]float64, len(leagueTable)),
 	}
 	
 	for i, team := range leagueTable {
 		sp.TeamNames[i] = team.Name
 		sp.Points[i] = make([]float64, nPaths)
+		sp.GoalDifference[i] = make([]float64, nPaths)
 		
-		// Initialize with current points + small adjustments for goal difference and noise
-		pointsWithAdjustments := float64(team.Points) + 
-			GDMultiplier*float64(team.GoalDifference) + 
-			NoiseMultiplier*(rand.Float64()-0.5)
+		// Initialize with current points + noise
+		pointsWithNoise := float64(team.Points) + NoiseMultiplier*(rand.Float64()-0.5)
+		// Initialize with current goal difference + noise
+		gdWithNoise := float64(team.GoalDifference) + NoiseMultiplier*(rand.Float64()-0.5)
 		
 		for j := 0; j < nPaths; j++ {
-			sp.Points[i][j] = pointsWithAdjustments
+			sp.Points[i][j] = pointsWithNoise
+			sp.GoalDifference[i][j] = gdWithNoise
 		}
 	}
 	
@@ -71,8 +75,9 @@ func (sp *SimPoints) updateHomeTeam(teamName string, scores [][]int) {
 		// Calculate goal difference
 		goalDifference := float64(homeGoals - awayGoals)
 		
-		// Update points
-		sp.Points[teamIndex][i] += points + GDMultiplier*goalDifference
+		// Update points and goal difference separately
+		sp.Points[teamIndex][i] += points
+		sp.GoalDifference[teamIndex][i] += goalDifference
 	}
 }
 
@@ -97,8 +102,9 @@ func (sp *SimPoints) updateAwayTeam(teamName string, scores [][]int) {
 		// Calculate goal difference
 		goalDifference := float64(awayGoals - homeGoals)
 		
-		// Update points
-		sp.Points[teamIndex][i] += points + GDMultiplier*goalDifference
+		// Update points and goal difference separately
+		sp.Points[teamIndex][i] += points
+		sp.GoalDifference[teamIndex][i] += goalDifference
 	}
 }
 
@@ -125,10 +131,12 @@ func (sp *SimPoints) positionProbabilities(teamNames []string) map[string][]floa
 		return make(map[string][]float64)
 	}
 	
-	// Extract points for selected teams
+	// Extract points and goal difference for selected teams
 	selectedPoints := make([][]float64, len(selectedIndices))
+	selectedGoalDifference := make([][]float64, len(selectedIndices))
 	for i, idx := range selectedIndices {
 		selectedPoints[i] = sp.Points[idx]
+		selectedGoalDifference[i] = sp.GoalDifference[idx]
 	}
 	
 	// Calculate positions for each path
@@ -138,29 +146,35 @@ func (sp *SimPoints) positionProbabilities(teamNames []string) map[string][]floa
 	}
 	
 	for path := 0; path < sp.NPaths; path++ {
-		// Create array of team points for this path
-		teamPoints := make([]struct {
+		// Create array of team data for this path
+		teamData := make([]struct {
 			TeamIndex int
 			Points    float64
+			GD        float64
 		}, len(selectedIndices))
 		
 		for i := range selectedIndices {
-			teamPoints[i] = struct {
+			teamData[i] = struct {
 				TeamIndex int
 				Points    float64
+				GD        float64
 			}{
 				TeamIndex: i,
 				Points:    selectedPoints[i][path],
+				GD:        selectedGoalDifference[i][path],
 			}
 		}
 		
-		// Sort by points (descending) to get positions
-		sort.Slice(teamPoints, func(i, j int) bool {
-			return teamPoints[i].Points > teamPoints[j].Points
+		// Sort by points first, then by goal difference (both descending) to get positions
+		sort.Slice(teamData, func(i, j int) bool {
+			if teamData[i].Points == teamData[j].Points {
+				return teamData[i].GD > teamData[j].GD
+			}
+			return teamData[i].Points > teamData[j].Points
 		})
 		
 		// Assign positions (0 = first place, 1 = second place, etc.)
-		for pos, team := range teamPoints {
+		for pos, team := range teamData {
 			positions[team.TeamIndex][path] = pos
 		}
 	}
