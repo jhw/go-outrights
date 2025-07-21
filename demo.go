@@ -19,7 +19,7 @@ func main() {
 	generations := 0 // 0 means use default
 	npaths := 0      // 0 means use default
 	rounds := 0      // 0 means use default
-	trainingSetSize := 0 // 0 means use default
+	timePowerWeighting := 0.0 // 0.0 means use default
 	debug := false   // default false
 	
 	// Parse named arguments
@@ -43,11 +43,11 @@ func main() {
 			} else {
 				log.Fatalf("Invalid rounds: %s", arg)
 			}
-		} else if strings.HasPrefix(arg, "--training-set-size=") {
-			if t, err := strconv.Atoi(strings.TrimPrefix(arg, "--training-set-size=")); err == nil {
-				trainingSetSize = t
+		} else if strings.HasPrefix(arg, "--time-power-weighting=") {
+			if t, err := strconv.ParseFloat(strings.TrimPrefix(arg, "--time-power-weighting="), 64); err == nil {
+				timePowerWeighting = t
 			} else {
-				log.Fatalf("Invalid training-set-size: %s", arg)
+				log.Fatalf("Invalid time-power-weighting: %s", arg)
 			}
 		} else if arg == "--debug" {
 			debug = true
@@ -56,7 +56,7 @@ func main() {
 		} else if strings.HasPrefix(arg, "--markets=") {
 			marketsFile = strings.TrimPrefix(arg, "--markets=")
 		} else if arg == "--help" || arg == "-h" {
-			fmt.Println("Usage: go run . [--events=filename] [--markets=filename] [--generations=N] [--npaths=N] [--rounds=N] [--training-set-size=N] [--debug]")
+			fmt.Println("Usage: go run . [--events=filename] [--markets=filename] [--generations=N] [--npaths=N] [--rounds=N] [--time-power-weighting=N] [--debug]")
 			fmt.Println()
 			fmt.Println("Options:")
 			fmt.Println("  --events=filename       Events JSON file (default: fixtures/ENG1-events.json)")
@@ -64,13 +64,13 @@ func main() {
 			fmt.Println("  --generations=N         Number of genetic algorithm generations (default: 1000)")
 			fmt.Println("  --npaths=N             Number of simulation paths (default: 5000)")
 			fmt.Println("  --rounds=N             Number of rounds each team plays (default: 1)")
-			fmt.Println("  --training-set-size=N  Number of recent events for training (default: 60)")
+			fmt.Println("  --time-power-weighting=N Time power weighting (1.0=linear, >1=faster decay, <1=slower decay, default: 1.0)")
 			fmt.Println("  --debug                Enable debug logging for genetic algorithm")
 			fmt.Println("  --help, -h          Show this help message")
 			fmt.Println()
 			fmt.Println("Examples:")
 			fmt.Println("  go run .                                    # Use default settings")
-			fmt.Println("  go run . --generations=2000 --npaths=5000   # Quick high-quality run")
+			fmt.Println("  go run . --generations=2000 --npaths=5000 --time-power-weighting=2.0   # High-quality run with exponential decay")
 			fmt.Println("  go run . --events=fixtures/other.json      # Use different events file")
 			fmt.Println("  go run . --markets=fixtures/other.json      # Use different markets file")
 			fmt.Println("  go run . --debug                           # Enable debug logging")
@@ -108,11 +108,11 @@ func main() {
 	
 	// Create options struct with overrides
 	opts := outrights.SimOptions{
-		Generations:     generations,
-		NPaths:          npaths,
-		Rounds:          rounds,
-		TrainingSetSize: trainingSetSize,
-		Debug:           debug,
+		Generations:        generations,
+		NPaths:             npaths,
+		Rounds:             rounds,
+		TimePowerWeighting: timePowerWeighting,
+		Debug:              debug,
 	}
 	
 	result, err := outrights.Simulate(events, markets, make(map[string]int), opts)
@@ -123,15 +123,15 @@ func main() {
 	log.Printf("Home advantage: %.4f, Solver error: %.6f", result.HomeAdvantage, result.SolverError)
 	log.Println()
 	log.Println("Teams (sorted by expected season points):")
-	log.Println("Team            \tPts\tPlayed\tGD\tPPG\tPoisson\tExp.Pts\tEv\tError\tStdErr")
-	log.Println("----            \t---\t------\t--\t---\t-------\t-------\t--\t-----\t------")
+	log.Println("Team            \tPts\tPlayed\tGD\tPPG\tPoisson\tExp.Pts")
+	log.Println("----            \t---\t------\t--\t---\t-------\t-------")
 	for _, team := range result.Teams {
 		teamName := team.Name
 		if len(teamName) > 16 {
 			teamName = teamName[:16]
 		}
-		log.Printf("%-16s\t%d\t%d\t%+d\t%.3f\t%.3f\t%.1f\t%d\t%.3f\t%.3f", 
-			teamName, team.Points, team.Played, team.GoalDifference, team.PointsPerGameRating, team.PoissonRating, team.ExpectedSeasonPoints, team.TrainingEvents, team.MeanTrainingError, team.StdTrainingError)
+		log.Printf("%-16s\t%d\t%d\t%+d\t%.3f\t%.3f\t%.1f", 
+			teamName, team.Points, team.Played, team.GoalDifference, team.PointsPerGameRating, team.PoissonRating, team.ExpectedSeasonPoints)
 	}
 	
 	

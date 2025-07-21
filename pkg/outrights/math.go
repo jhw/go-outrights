@@ -38,6 +38,12 @@ func dixonColesAdjustment(i, j int, rho float64) float64 {
 }
 
 // rmsError calculates the root mean square error between two slices
+// 
+// Note: For match probabilities [home, draw, away], we include all three values
+// despite mathematical redundancy (away = 1 - home - draw). This gives team 
+// strength differences (home/away outcomes) double weight vs. draw probability
+// in the error calculation, which is appropriate since draws are harder to
+// predict and team ability should be the primary optimization target.
 func rmsError(x, y []float64) float64 {
 	if len(x) != len(y) {
 		return math.Inf(1)
@@ -94,4 +100,16 @@ func sumProduct(x, y []float64) float64 {
 		sum += x[i] * y[i]
 	}
 	return sum
+}
+
+// calculateTimeWeight calculates power-based time weighting for events
+// Most recent event gets weight 1.0, oldest gets weight 0.0
+// Power controls the decay curve: 1.0 = linear, >1 = faster decay, <1 = slower decay
+func calculateTimeWeight(eventIndex, totalEvents int, power float64) float64 {
+	if totalEvents <= 1 {
+		return 1.0
+	}
+	// Convert index to ratio where 0 = oldest, 1 = newest
+	ratio := float64(eventIndex) / float64(totalEvents-1)
+	return math.Pow(ratio, power)
 }

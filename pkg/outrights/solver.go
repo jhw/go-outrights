@@ -179,24 +179,29 @@ func newRatingsSolver() *RatingsSolver {
 	return &RatingsSolver{}
 }
 
-func (rs *RatingsSolver) calcError(events []Event, ratings map[string]float64, homeAdvantage float64) float64 {
-	var totalError float64
-	count := 0
+func (rs *RatingsSolver) calcError(events []Event, ratings map[string]float64, homeAdvantage, timePowerWeighting float64) float64 {
+	var totalWeightedError float64
+	var totalWeight float64
 	
-	for _, event := range events {
+	for i, event := range events {
 		matrix := newScoreMatrix(event.Name, ratings, homeAdvantage)
 		modelOdds := matrix.matchOdds()
 		marketProbs := extractMarketProbabilities(event)
 		
 		error := rmsError(modelOdds, marketProbs)
-		totalError += error
-		count++
+		weight := calculateTimeWeight(i, len(events), timePowerWeighting)
+		
+		totalWeightedError += error * weight
+		totalWeight += weight
 	}
 	
-	return totalError / float64(count)
+	if totalWeight == 0 {
+		return 0
+	}
+	return totalWeightedError / totalWeight
 }
 
-func (rs *RatingsSolver) optimizeRatings(events []Event, ratings map[string]float64, homeAdvantage float64, options map[string]interface{}) {
+func (rs *RatingsSolver) optimizeRatings(events []Event, ratings map[string]float64, homeAdvantage, timePowerWeighting float64, options map[string]interface{}) {
 	log.Printf("Starting ratings optimization for %d teams with fixed home advantage %.6f", len(ratings), homeAdvantage)
 	
 	teamNames := make([]string, 0, len(ratings))
@@ -219,7 +224,7 @@ func (rs *RatingsSolver) optimizeRatings(events []Event, ratings map[string]floa
 		for i, name := range teamNames {
 			tempRatings[name] = params[i]
 		}
-		return rs.calcError(events, tempRatings, homeAdvantage)
+		return rs.calcError(events, tempRatings, homeAdvantage, timePowerWeighting)
 	}
 	
 	// Optimize
@@ -234,7 +239,7 @@ func (rs *RatingsSolver) optimizeRatings(events []Event, ratings map[string]floa
 	log.Printf("Ratings optimization completed with final error: %.6f", fitness)
 }
 
-func (rs *RatingsSolver) optimizeRatingsAndBias(events []Event, ratings map[string]float64, options map[string]interface{}) float64 {
+func (rs *RatingsSolver) optimizeRatingsAndBias(events []Event, ratings map[string]float64, timePowerWeighting float64, options map[string]interface{}) float64 {
 	log.Printf("Starting joint optimization of %d team ratings and home advantage", len(ratings))
 	
 	teamNames := make([]string, 0, len(ratings))
@@ -263,7 +268,7 @@ func (rs *RatingsSolver) optimizeRatingsAndBias(events []Event, ratings map[stri
 			tempRatings[name] = params[i]
 		}
 		homeAdvantage := params[len(teamNames)]
-		return rs.calcError(events, tempRatings, homeAdvantage)
+		return rs.calcError(events, tempRatings, homeAdvantage, timePowerWeighting)
 	}
 	
 	// Optimize
@@ -322,24 +327,35 @@ func (rs *RatingsSolver) initializeRatingsFromLeagueTable(teamNames []string, ev
 	return ratings
 }
 
-func (rs *RatingsSolver) solve(events []Event, ratings map[string]float64, results []Event, options map[string]interface{}) map[string]interface{} {
+func (rs *RatingsSolver) solve(events []Event, ratings map[string]float64, timePowerWeighting float64, options map[string]interface{}) map[string]interface{} {
 	log.Printf("Starting solver with %d events, max_iterations=%d", len(events), options["generations"].(int))
 	
-	// Initialize ratings from league table if results are provided
+	// Initialize ratings from league table if events with scores are provided
 	useLeagueTableInit := true
 	if val, exists := options["use_league_table_init"]; exists {
 		useLeagueTableInit = val.(bool)
 	}
-	if useLeagueTableInit && len(results) > 0 {
-		teamNames := make([]string, 0, len(ratings))
-		for name := range ratings {
-			teamNames = append(teamNames, name)
+	if useLeagueTableInit {
+		// Check if we have any events with scores for initialization
+		hasScores := false
+		for _, event := range events {
+			if len(event.Score) > 0 {
+				hasScores = true
+				break
+			}
 		}
-		sort.Strings(teamNames)
 		
-		leagueTableRatings := rs.initializeRatingsFromLeagueTable(teamNames, results)
-		for name, rating := range leagueTableRatings {
-			ratings[name] = rating
+		if hasScores {
+			teamNames := make([]string, 0, len(ratings))
+			for name := range ratings {
+				teamNames = append(teamNames, name)
+			}
+			sort.Strings(teamNames)
+			
+			leagueTableRatings := rs.initializeRatingsFromLeagueTable(teamNames, events)
+			for name, rating := range leagueTableRatings {
+				ratings[name] = rating
+			}
 		}
 	}
 	
@@ -348,12 +364,12 @@ func (rs *RatingsSolver) solve(events []Event, ratings map[string]float64, resul
 	// Check if home advantage is provided
 	if ha, exists := options["home_advantage"]; exists {
 		homeAdvantage = ha.(float64)
-		rs.optimizeRatings(events, ratings, homeAdvantage, options)
+		rs.optimizeRatings(events, ratings, homeAdvantage, timePowerWeighting, options)
 	} else {
-		homeAdvantage = rs.optimizeRatingsAndBias(events, ratings, options)
+		homeAdvantage = rs.optimizeRatingsAndBias(events, ratings, timePowerWeighting, options)
 	}
 	
-	error := rs.calcError(events, ratings, homeAdvantage)
+	error := rs.calcError(events, ratings, homeAdvantage, timePowerWeighting)
 	log.Printf("Solver completed with final error: %.6f", error)
 	
 	return map[string]interface{}{

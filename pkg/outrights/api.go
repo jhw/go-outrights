@@ -13,7 +13,7 @@ func Simulate(events []Event, markets []Market, handicaps map[string]int, opts .
 	generations := 1000
 	npaths := 5000
 	rounds := 1
-	trainingSetSize := 60
+	timePowerWeighting := 1.0
 	populationSize := 8
 	mutationFactor := 0.1
 	eliteRatio := 0.1
@@ -34,8 +34,8 @@ func Simulate(events []Event, markets []Market, handicaps map[string]int, opts .
 		if opts[0].Rounds > 0 {
 			rounds = opts[0].Rounds
 		}
-		if opts[0].TrainingSetSize > 0 {
-			trainingSetSize = opts[0].TrainingSetSize
+		if opts[0].TimePowerWeighting > 0 {
+			timePowerWeighting = opts[0].TimePowerWeighting
 		}
 		if opts[0].PopulationSize > 0 {
 			populationSize = opts[0].PopulationSize
@@ -100,7 +100,7 @@ func Simulate(events []Event, markets []Market, handicaps map[string]int, opts .
 		}
 	}
 	
-	// Sort events by date and name for consistent training set selection
+	// Sort events by date and name for consistent time-based weighting
 	sort.Slice(events, func(i, j int) bool {
 		if events[i].Date == events[j].Date {
 			return events[i].Name < events[j].Name
@@ -108,22 +108,10 @@ func Simulate(events []Event, markets []Market, handicaps map[string]int, opts .
 		return events[i].Date < events[j].Date
 	})
 	
-	// Split events into training and prediction sets
-	// Take the last trainingSetSize events for training
-	trainingCount := trainingSetSize
-	if trainingCount > len(events) {
-		trainingCount = len(events)
-	}
-	
-	startIndex := len(events) - trainingCount
-	trainingEvents := events[startIndex:]
-	predictionEvents := events[:startIndex]
-	
 	// Create simulation request
 	req := SimulationRequest{
 		Ratings:         make(map[string]float64),
-		TrainingSet:     trainingEvents,
-		Events:          predictionEvents,
+		Events:          events,
 		Handicaps:       handicaps,
 		Markets:         markets,
 		PopulationSize:  populationSize,
@@ -134,6 +122,7 @@ func Simulate(events []Event, markets []Market, handicaps map[string]int, opts .
 		DecayExponent:   decayExponent,
 		MutationProbability: mutationProbability,
 		NPaths:          npaths,
+		TimePowerWeighting: timePowerWeighting,
 	}
 	
 	// Initialize ratings to 1.0 for all teams
@@ -181,8 +170,8 @@ func ProcessSimulation(req SimulationRequest, generations int, rounds int, debug
 		"debug":                  debug,
 	}
 	
-	// Solve for ratings using training data
-	solverResp := solver.solve(req.TrainingSet, req.Ratings, req.Events, options)
+	// Solve for ratings using all events with time power weighting
+	solverResp := solver.solve(req.Events, req.Ratings, req.TimePowerWeighting, options)
 	
 	// Extract results
 	poissonRatings := solverResp["ratings"].(map[string]float64)
@@ -217,13 +206,6 @@ func ProcessSimulation(req SimulationRequest, generations int, rounds int, debug
 			leagueTable[i].PoissonRating = poissonRating
 		}
 		
-		// Calculate training errors
-		trainingErrors := calcTrainingErrors(teamNames, req.TrainingSet, poissonRatings, homeAdvantage)
-		if errors, exists := trainingErrors[leagueTable[i].Name]; exists {
-			leagueTable[i].TrainingEvents = len(errors)
-			leagueTable[i].MeanTrainingError = mean(errors)
-			leagueTable[i].StdTrainingError = stdDeviation(errors)
-		}
 	}
 	
 	// Sort teams by expected season points (descending)

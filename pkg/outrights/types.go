@@ -5,7 +5,7 @@ type SimOptions struct {
 	Generations          int
 	NPaths               int
 	Rounds               int
-	TrainingSetSize      int
+	TimePowerWeighting   float64
 	PopulationSize       int
 	MutationFactor       float64
 	EliteRatio           float64
@@ -45,9 +45,6 @@ type Team struct {
 	PoissonRating          float64   `json:"poisson_rating"`
 	ExpectedSeasonPoints   float64   `json:"expected_season_points"`
 	PositionProbabilities  []float64 `json:"position_probabilities"`
-	TrainingEvents         int       `json:"training_events"`
-	MeanTrainingError      float64   `json:"mean_training_error"`
-	StdTrainingError       float64   `json:"std_training_error"`
 }
 
 type OutrightMark struct {
@@ -71,7 +68,6 @@ type SimulationResult struct {
 
 type SimulationRequest struct {
 	Ratings     map[string]float64 `json:"ratings"`
-	TrainingSet []Event            `json:"training_set"`
 	Events      []Event            `json:"events"`
 	Handicaps   map[string]int     `json:"handicaps"`
 	Markets     []Market           `json:"markets"`
@@ -85,4 +81,5 @@ type SimulationRequest struct {
 	DecayExponent         float64 `json:"decay_exponent"`
 	MutationProbability   float64 `json:"mutation_probability"`
 	NPaths                int     `json:"n_paths"`
+	TimePowerWeighting    float64 `json:"time_power_weighting"`
 }
