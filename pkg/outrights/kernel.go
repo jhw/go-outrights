@@ -1,7 +1,6 @@
 package outrights
 
 import (
-	"math"
 	"math/rand"
 )
 
@@ -12,35 +11,6 @@ const (
 	NoiseMultiplier = 1e-8
 )
 
-func factorial(n int) float64 {
-	if n <= 1 {
-		return 1
-	}
-	result := 1.0
-	for i := 2; i <= n; i++ {
-		result *= float64(i)
-	}
-	return result
-}
-
-func poissonProb(lambda float64, k int) float64 {
-	return math.Pow(lambda, float64(k)) * math.Exp(-lambda) / factorial(k)
-}
-
-func dixonColesAdjustment(i, j int, rho float64) float64 {
-	switch {
-	case i == 0 && j == 0:
-		return 1 - (float64(i*j) * rho)
-	case i == 0 && j == 1:
-		return 1 + (rho / 2)
-	case i == 1 && j == 0:
-		return 1 + (rho / 2)
-	case i == 1 && j == 1:
-		return 1 - rho
-	default:
-		return 1
-	}
-}
 
 type ScoreMatrix struct {
 	HomeLambda  float64
@@ -175,16 +145,3 @@ func extractMarketProbabilities(event Event) []float64 {
 	return probs
 }
 
-func rmsError(x, y []float64) float64 {
-	if len(x) != len(y) {
-		return math.Inf(1)
-	}
-	
-	sum := 0.0
-	for i := range x {
-		diff := x[i] - y[i]
-		sum += diff * diff
-	}
-	
-	return math.Sqrt(sum / float64(len(x)))
-}

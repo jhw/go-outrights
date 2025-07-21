@@ -255,33 +255,6 @@ func ProcessSimulation(req SimulationRequest, generations int, rounds int, debug
 }
 
 
-func mean(x []float64) float64 {
-	if len(x) == 0 {
-		return 0
-	}
-	sum := 0.0
-	for _, v := range x {
-		sum += v
-	}
-	return sum / float64(len(x))
-}
-
-func variance(x []float64) float64 {
-	if len(x) == 0 {
-		return 0
-	}
-	m := mean(x)
-	sum := 0.0
-	for _, v := range x {
-		diff := v - m
-		sum += diff * diff
-	}
-	return sum
-}
-
-func stdDeviation(x []float64) float64 {
-	return math.Sqrt(variance(x))
-}
 
 func calcTrainingErrors(teamNames []string, events []Event, ratings map[string]float64, homeAdvantage float64) map[string][]float64 {
 	errors := make(map[string][]float64)
