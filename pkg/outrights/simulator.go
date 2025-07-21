@@ -1,7 +1,6 @@
 package outrights
 
 import (
-	"math/rand"
 	"sort"
 )
 
@@ -25,14 +24,10 @@ func newSimPoints(leagueTable []Team, nPaths int) *SimPoints {
 		sp.Points[i] = make([]int, nPaths)
 		sp.GoalDifference[i] = make([]int, nPaths)
 		
-		// Initialize with current points (small random variation for tie-breaking)
-		pointsWithNoise := team.Points + int(NoiseMultiplier*10*(rand.Float64()-0.5))
-		// Initialize with current goal difference (small random variation for tie-breaking)
-		gdWithNoise := team.GoalDifference + int(NoiseMultiplier*10*(rand.Float64()-0.5))
-		
+		// Initialize with current points and goal difference
 		for j := 0; j < nPaths; j++ {
-			sp.Points[i][j] = pointsWithNoise
-			sp.GoalDifference[i][j] = gdWithNoise
+			sp.Points[i][j] = team.Points
+			sp.GoalDifference[i][j] = team.GoalDifference
 		}
 	}
 	
@@ -148,29 +143,25 @@ func (sp *SimPoints) positionProbabilities(teamNames []string) map[string][]floa
 	for path := 0; path < sp.NPaths; path++ {
 		// Create array of team data for this path
 		teamData := make([]struct {
-			TeamIndex int
-			Points    int
-			GD        int
+			TeamIndex    int
+			CombinedScore float64
 		}, len(selectedIndices))
 		
 		for i := range selectedIndices {
+			// Combine points with goal difference as tie-breaker (multiply by small factor)
+			combinedScore := float64(selectedPoints[i][path]) + float64(selectedGoalDifference[i][path])*0.001
 			teamData[i] = struct {
-				TeamIndex int
-				Points    int
-				GD        int
+				TeamIndex    int
+				CombinedScore float64
 			}{
-				TeamIndex: i,
-				Points:    selectedPoints[i][path],
-				GD:        selectedGoalDifference[i][path],
+				TeamIndex:    i,
+				CombinedScore: combinedScore,
 			}
 		}
 		
-		// Sort by points first, then by goal difference (both descending) to get positions
+		// Sort by combined score (descending) to get positions
 		sort.Slice(teamData, func(i, j int) bool {
-			if teamData[i].Points == teamData[j].Points {
-				return teamData[i].GD > teamData[j].GD
-			}
-			return teamData[i].Points > teamData[j].Points
+			return teamData[i].CombinedScore > teamData[j].CombinedScore
 		})
 		
 		// Assign positions (0 = first place, 1 = second place, etc.)
