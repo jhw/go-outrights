@@ -82,3 +82,16 @@ func variance(x []float64) float64 {
 func stdDeviation(x []float64) float64 {
 	return math.Sqrt(variance(x))
 }
+
+// sumProduct calculates the dot product of two float64 slices
+func sumProduct(x, y []float64) float64 {
+	if len(x) != len(y) {
+		return 0
+	}
+	
+	sum := 0.0
+	for i := range x {
+		sum += x[i] * y[i]
+	}
+	return sum
+}
