@@ -8,7 +8,7 @@ import (
 
 
 // Simulate processes events and markets and returns simulation results
-func Simulate(events []Event, markets []Market, handicaps map[string]int, opts ...SimOptions) (SimulationResult, error) {
+func Simulate(results []Result, events []Event, markets []Market, handicaps map[string]int, opts ...SimOptions) (SimulationResult, error) {
 	// Set defaults
 	generations := 1000
 	npaths := 5000
@@ -66,10 +66,14 @@ func Simulate(events []Event, markets []Market, handicaps map[string]int, opts .
 		return SimulationResult{}, errors.New("events cannot be empty")
 	}
 	
-	// Extract team names from events
+	if len(results) == 0 {
+		return SimulationResult{}, errors.New("results cannot be empty")
+	}
+	
+	// Extract team names from results
 	teamNamesMap := make(map[string]bool)
-	for _, event := range events {
-		homeTeam, awayTeam := parseEventName(event.Name)
+	for _, result := range results {
+		homeTeam, awayTeam := parseEventName(result.Name)
 		if homeTeam != "" && awayTeam != "" {
 			teamNamesMap[homeTeam] = true
 			teamNamesMap[awayTeam] = true
@@ -83,7 +87,7 @@ func Simulate(events []Event, markets []Market, handicaps map[string]int, opts .
 	
 	// Validate that team names are not empty
 	if len(teamNames) == 0 {
-		return SimulationResult{}, errors.New("no valid team names found in events")
+		return SimulationResult{}, errors.New("no valid team names found in results")
 	}
 	
 	// Validate handicaps keys against extracted team names
@@ -111,6 +115,7 @@ func Simulate(events []Event, markets []Market, handicaps map[string]int, opts .
 	// Create simulation request
 	req := SimulationRequest{
 		Ratings:         make(map[string]float64),
+		Results:         results,
 		Events:          events,
 		Handicaps:       handicaps,
 		Markets:         markets,
@@ -151,8 +156,8 @@ func ProcessSimulation(req SimulationRequest, generations int, rounds int, debug
 	}
 	
 	// Calculate league table and remaining fixtures
-	leagueTable := calcLeagueTable(teamNames, req.Events, req.Handicaps)
-	remainingFixtures := calcRemainingFixtures(teamNames, req.Events, rounds)
+	leagueTable := calcLeagueTable(teamNames, req.Results, req.Handicaps)
+	remainingFixtures := calcRemainingFixtures(teamNames, req.Results, rounds)
 	
 	// Solve for ratings
 	solver := newRatingsSolver()
@@ -170,8 +175,8 @@ func ProcessSimulation(req SimulationRequest, generations int, rounds int, debug
 		"debug":                  debug,
 	}
 	
-	// Solve for ratings using all events with time power weighting
-	solverResp := solver.solve(req.Events, req.Ratings, req.TimePowerWeighting, options)
+	// Solve for ratings using events for training and results for initialization
+	solverResp := solver.solve(req.Events, req.Results, req.Ratings, req.TimePowerWeighting, options)
 	
 	// Extract results
 	poissonRatings := solverResp["ratings"].(map[string]float64)

@@ -20,10 +20,15 @@ type MatchOdds struct {
 	Prices []float64 `json:"prices"`
 }
 
+type Result struct {
+	Name  string `json:"name"`
+	Date  string `json:"date"`
+	Score []int  `json:"score"`
+}
+
 type Event struct {
 	Name      string    `json:"name"`
 	Date      string    `json:"date"`
-	Score     []int     `json:"score,omitempty"`
 	MatchOdds MatchOdds `json:"match_odds"`
 }
 
@@ -68,6 +73,7 @@ type SimulationResult struct {
 
 type SimulationRequest struct {
 	Ratings     map[string]float64 `json:"ratings"`
+	Results     []Result           `json:"results"`
 	Events      []Event            `json:"events"`
 	Handicaps   map[string]int     `json:"handicaps"`
 	Markets     []Market           `json:"markets"`

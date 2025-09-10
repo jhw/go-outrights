@@ -14,7 +14,8 @@ import (
 
 func main() {
 	// Default values
-	eventsFile := "fixtures/ENG1-events.json"   // Default events file
+	resultsFile := "fixtures/ENG1-results.json"   // Default results file
+	eventsFile := "fixtures/ENG1-training-events.json"   // Default training events file
 	marketsFile := "fixtures/ENG1-markets.json" // Default markets file
 	generations := 0 // 0 means use default
 	npaths := 0      // 0 means use default
@@ -51,15 +52,18 @@ func main() {
 			}
 		} else if arg == "--debug" {
 			debug = true
+		} else if strings.HasPrefix(arg, "--results=") {
+			resultsFile = strings.TrimPrefix(arg, "--results=")
 		} else if strings.HasPrefix(arg, "--events=") {
 			eventsFile = strings.TrimPrefix(arg, "--events=")
 		} else if strings.HasPrefix(arg, "--markets=") {
 			marketsFile = strings.TrimPrefix(arg, "--markets=")
 		} else if arg == "--help" || arg == "-h" {
-			fmt.Println("Usage: go run . [--events=filename] [--markets=filename] [--generations=N] [--npaths=N] [--rounds=N] [--time-power-weighting=N] [--debug]")
+			fmt.Println("Usage: go run . [--results=filename] [--events=filename] [--markets=filename] [--generations=N] [--npaths=N] [--rounds=N] [--time-power-weighting=N] [--debug]")
 			fmt.Println()
 			fmt.Println("Options:")
-			fmt.Println("  --events=filename       Events JSON file (default: fixtures/ENG1-events.json)")
+			fmt.Println("  --results=filename      Results JSON file (default: fixtures/ENG1-results.json)")
+			fmt.Println("  --events=filename       Training events JSON file (default: fixtures/ENG1-training-events.json)")
 			fmt.Println("  --markets=filename      Markets JSON file (default: fixtures/ENG1-markets.json)")
 			fmt.Println("  --generations=N         Number of genetic algorithm generations (default: 1000)")
 			fmt.Println("  --npaths=N             Number of simulation paths (default: 5000)")
@@ -71,7 +75,7 @@ func main() {
 			fmt.Println("Examples:")
 			fmt.Println("  go run .                                    # Use default settings")
 			fmt.Println("  go run . --generations=2000 --npaths=5000 --time-power-weighting=2.0   # High-quality run with exponential decay")
-			fmt.Println("  go run . --events=fixtures/other.json      # Use different events file")
+			fmt.Println("  go run . --results=fixtures/other-results.json --events=fixtures/other-events.json  # Use different files")
 			fmt.Println("  go run . --markets=fixtures/other.json      # Use different markets file")
 			fmt.Println("  go run . --debug                           # Enable debug logging")
 			os.Exit(0)
@@ -80,14 +84,25 @@ func main() {
 		}
 	}
 	
+	// Read and parse the results JSON file
+	resultsData, err := os.ReadFile(resultsFile)
+	if err != nil {
+		log.Fatal(err)
+	}
+	
+	var results []outrights.Result
+	if err := json.Unmarshal(resultsData, &results); err != nil {
+		log.Fatal(err)
+	}
+	
 	// Read and parse the events JSON file
-	data, err := os.ReadFile(eventsFile)
+	eventsData, err := os.ReadFile(eventsFile)
 	if err != nil {
 		log.Fatal(err)
 	}
 	
 	var events []outrights.Event
-	if err := json.Unmarshal(data, &events); err != nil {
+	if err := json.Unmarshal(eventsData, &events); err != nil {
 		log.Fatal(err)
 	}
 	
@@ -102,7 +117,7 @@ func main() {
 		log.Fatal(err)
 	}
 	
-	log.Printf("Processing %s with %d events", eventsFile, len(events))
+	log.Printf("Processing %d results from %s and %d training events from %s", len(results), resultsFile, len(events), eventsFile)
 	log.Printf("Loaded %d markets from %s", len(markets), marketsFile)
 	log.Println("Starting simulation...")
 	
@@ -115,7 +130,7 @@ func main() {
 		Debug:              debug,
 	}
 	
-	result, err := outrights.Simulate(events, markets, make(map[string]int), opts)
+	result, err := outrights.Simulate(results, events, markets, make(map[string]int), opts)
 	if err != nil {
 		log.Fatalf("Simulation error: %v", err)
 	}

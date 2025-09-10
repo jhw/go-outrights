@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-func calcLeagueTable(teamNames []string, events []Event, handicaps map[string]int) []Team {
+func calcLeagueTable(teamNames []string, results []Result, handicaps map[string]int) []Team {
 	teams := make(map[string]*Team)
 	
 	// Initialize teams
@@ -25,12 +25,12 @@ func calcLeagueTable(teamNames []string, events []Event, handicaps map[string]in
 		}
 	}
 	
-	// Process events
-	for _, event := range events {
-		homeTeam, awayTeam := parseEventName(event.Name)
+	// Process results
+	for _, result := range results {
+		homeTeam, awayTeam := parseEventName(result.Name)
 		
 		// Skip if we don't have match result data
-		if len(event.Score) != 2 {
+		if len(result.Score) != 2 {
 			continue
 		}
 		
@@ -42,8 +42,8 @@ func calcLeagueTable(teamNames []string, events []Event, handicaps map[string]in
 			teams[awayTeam] = &Team{Name: awayTeam}
 		}
 		
-		homeGoals := event.Score[0]
-		awayGoals := event.Score[1]
+		homeGoals := result.Score[0]
+		awayGoals := result.Score[1]
 		
 		// Calculate points
 		if homeGoals > awayGoals {
@@ -82,14 +82,14 @@ func calcLeagueTable(teamNames []string, events []Event, handicaps map[string]in
 	return result
 }
 
-func calcRemainingFixtures(teamNames []string, events []Event, rounds int) []string {
+func calcRemainingFixtures(teamNames []string, results []Result, rounds int) []string {
 	// Count how many times each fixture has been played
 	playedCounts := make(map[string]int)
 	
-	// Count already played fixtures (only those with scores)
-	for _, event := range events {
-		if len(event.Score) == 2 {
-			playedCounts[event.Name]++
+	// Count already played fixtures
+	for _, result := range results {
+		if len(result.Score) == 2 {
+			playedCounts[result.Name]++
 		}
 	}
 	

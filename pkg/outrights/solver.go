@@ -285,8 +285,8 @@ func (rs *RatingsSolver) optimizeRatingsAndBias(events []Event, ratings map[stri
 	return homeAdvantage
 }
 
-func (rs *RatingsSolver) initializeRatingsFromLeagueTable(teamNames []string, events []Event) map[string]float64 {
-	leagueTable := calcLeagueTable(teamNames, events, make(map[string]int))
+func (rs *RatingsSolver) initializeRatingsFromLeagueTable(teamNames []string, results []Result) map[string]float64 {
+	leagueTable := calcLeagueTable(teamNames, results, make(map[string]int))
 	
 	// Check if we have any results
 	hasResults := false
@@ -327,7 +327,7 @@ func (rs *RatingsSolver) initializeRatingsFromLeagueTable(teamNames []string, ev
 	return ratings
 }
 
-func (rs *RatingsSolver) solve(events []Event, ratings map[string]float64, timePowerWeighting float64, options map[string]interface{}) map[string]interface{} {
+func (rs *RatingsSolver) solve(events []Event, results []Result, ratings map[string]float64, timePowerWeighting float64, options map[string]interface{}) map[string]interface{} {
 	log.Printf("Starting solver with %d events, max_iterations=%d", len(events), options["generations"].(int))
 	
 	// Initialize ratings from league table if events with scores are provided
@@ -336,23 +336,17 @@ func (rs *RatingsSolver) solve(events []Event, ratings map[string]float64, timeP
 		useLeagueTableInit = val.(bool)
 	}
 	if useLeagueTableInit {
-		// Check if we have any events with scores for initialization
-		hasScores := false
-		for _, event := range events {
-			if len(event.Score) > 0 {
-				hasScores = true
-				break
-			}
-		}
+		// Check if we have any results for initialization
+		hasResults := len(results) > 0
 		
-		if hasScores {
+		if hasResults {
 			teamNames := make([]string, 0, len(ratings))
 			for name := range ratings {
 				teamNames = append(teamNames, name)
 			}
 			sort.Strings(teamNames)
 			
-			leagueTableRatings := rs.initializeRatingsFromLeagueTable(teamNames, events)
+			leagueTableRatings := rs.initializeRatingsFromLeagueTable(teamNames, results)
 			for name, rating := range leagueTableRatings {
 				ratings[name] = rating
 			}
