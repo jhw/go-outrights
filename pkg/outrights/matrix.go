@@ -44,9 +44,9 @@ func (sm *ScoreMatrix) initMatrix() {
 	
 	for i := 0; i < sm.N; i++ {
 		for j := 0; j < sm.N; j++ {
-			homeProb := poissonProb(sm.HomeLambda, i)
-			awayProb := poissonProb(sm.AwayLambda, j)
-			adjustment := dixonColesAdjustment(i, j, sm.Rho)
+			homeProb := PoissonProb(sm.HomeLambda, i)
+			awayProb := PoissonProb(sm.AwayLambda, j)
+			adjustment := DixonColesAdjustment(i, j, sm.Rho)
 			sm.Matrix[i][j] = homeProb * awayProb * adjustment
 		}
 	}

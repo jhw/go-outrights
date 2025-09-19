@@ -17,12 +17,12 @@ func factorial(n int) float64 {
 }
 
 // poissonProb calculates the Poisson probability for lambda and k
-func poissonProb(lambda float64, k int) float64 {
+func PoissonProb(lambda float64, k int) float64 {
 	return math.Pow(lambda, float64(k)) * math.Exp(-lambda) / factorial(k)
 }
 
 // dixonColesAdjustment applies Dixon-Coles adjustment for low-scoring games
-func dixonColesAdjustment(i, j int, rho float64) float64 {
+func DixonColesAdjustment(i, j int, rho float64) float64 {
 	switch {
 	case i == 0 && j == 0:
 		return 1 - (float64(i*j) * rho)

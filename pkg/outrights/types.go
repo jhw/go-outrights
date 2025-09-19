@@ -92,3 +92,30 @@ type SimulationRequest struct {
 	NPaths                int     `json:"n_paths"`
 	TimePowerWeighting    float64 `json:"time_power_weighting"`
 }
+
+// EventMatch represents a single match for solve-events workflow
+type EventMatch struct {
+	Fixture       string    `json:"fixture"`        // "Home Team vs Away Team"  
+	MatchOdds     [3]float64 `json:"match_odds"`     // [home_price, draw_price, away_price]
+}
+
+// SolveEventsRequest represents the input for solve-events workflow
+type SolveEventsRequest struct {
+	Matches []EventMatch `json:"matches"`
+}
+
+// EventSolution represents the solution for a single event
+type EventSolution struct {
+	Fixture         string           `json:"fixture"`
+	Lambdas         [2]float64       `json:"lambdas"`          // [home_lambda, away_lambda]
+	Probabilities   [3]float64       `json:"probabilities"`    // [home_win, draw, away_win] 
+	AsianHandicaps  [][2]interface{} `json:"asian_handicaps"`  // [(handicap, probabilities)]
+	TotalGoals      [][2]interface{} `json:"total_goals"`      // [(line, [under, over])]
+	SolverError     float64          `json:"solver_error"`     // Fit quality
+}
+
+// SolveEventsResult represents the output for solve-events workflow  
+type SolveEventsResult struct {
+	Solutions     []EventSolution `json:"solutions"`
+	HomeAdvantage float64         `json:"home_advantage"`
+}
