@@ -59,8 +59,11 @@ type OutrightMark struct {
 }
 
 type FixtureOdds struct {
-	Fixture       string     `json:"fixture"`        // "Home Team vs Away Team"
-	Probabilities [3]float64 `json:"probabilities"`  // [home_win, draw, away_win]
+	Fixture         string          `json:"fixture"`          // "Home Team vs Away Team"
+	Probabilities   [3]float64      `json:"probabilities"`    // [home_win, draw, away_win]
+	AsianHandicaps  [][2]interface{} `json:"asian_handicaps"`  // [(handicap, [home_win, away_win] or [home_win, draw, away_win])]
+	TotalGoals      [][2]interface{} `json:"total_goals"`      // [(line, [under, over])]
+	Lambdas         [2]float64      `json:"lambdas"`          // [home_lambda, away_lambda]
 }
 
 type SimulationResult struct {

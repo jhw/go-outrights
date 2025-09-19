@@ -127,6 +127,57 @@ func (sm *ScoreMatrix) simulateScores(nPaths int) [][]int {
 	return results
 }
 
+// asianHandicaps calculates Asian handicap probabilities at half-point intervals
+func (sm *ScoreMatrix) asianHandicaps() [][2]interface{} {
+	var handicaps [][2]interface{}
+	
+	// Calculate handicaps from -4.5 to +4.5 (based on N-1 to handle matrix bounds)
+	maxHandicap := float64(sm.N - 1)
+	for handicap := -maxHandicap + 0.5; handicap <= maxHandicap - 0.5; handicap += 0.5 {
+		var probs interface{}
+		
+		if handicap == float64(int(handicap)) {
+			// Integer handicap: [home_win, draw, away_win]
+			homeWin := sm.probability(func(i, j int) bool { return float64(i) - float64(j) > handicap })
+			draw := sm.probability(func(i, j int) bool { return float64(i) - float64(j) == handicap })
+			awayWin := sm.probability(func(i, j int) bool { return float64(i) - float64(j) < handicap })
+			
+			total := homeWin + draw + awayWin
+			probs = [3]float64{homeWin / total, draw / total, awayWin / total}
+		} else {
+			// Half handicap: [home_win, away_win] 
+			homeWin := sm.probability(func(i, j int) bool { return float64(i) - float64(j) > handicap })
+			awayWin := sm.probability(func(i, j int) bool { return float64(i) - float64(j) < handicap })
+			
+			total := homeWin + awayWin
+			probs = [2]float64{homeWin / total, awayWin / total}
+		}
+		
+		handicaps = append(handicaps, [2]interface{}{handicap, probs})
+	}
+	
+	return handicaps
+}
+
+// totalGoals calculates over/under total goals probabilities at half-point intervals
+func (sm *ScoreMatrix) totalGoals() [][2]interface{} {
+	var totals [][2]interface{}
+	
+	// Calculate totals from 0.5 to (N-1)*2 - 0.5 goals
+	maxGoals := float64(sm.N*2 - 2)
+	for line := 0.5; line <= maxGoals - 0.5; line += 1.0 {
+		under := sm.probability(func(i, j int) bool { return float64(i + j) < line })
+		over := sm.probability(func(i, j int) bool { return float64(i + j) > line })
+		
+		total := under + over
+		probs := [2]float64{under / total, over / total}
+		
+		totals = append(totals, [2]interface{}{line, probs})
+	}
+	
+	return totals
+}
+
 func extractMarketProbabilities(event Event) []float64 {
 	prices := event.MatchOdds.Prices
 	probs := make([]float64, len(prices))

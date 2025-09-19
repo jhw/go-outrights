@@ -94,9 +94,21 @@ func CalcAllFixtureOdds(teamNames []string, ratings map[string]float64, homeAdva
 				// Get match probabilities [home_win, draw, away_win]
 				probabilities := matrix.matchOdds()
 				
+				// Get Asian handicaps
+				asianHandicaps := matrix.asianHandicaps()
+				
+				// Get total goals over/under
+				totalGoals := matrix.totalGoals()
+				
+				// Get lambda values
+				lambdas := [2]float64{matrix.HomeLambda, matrix.AwayLambda}
+				
 				fixtureOdds = append(fixtureOdds, FixtureOdds{
-					Fixture:       fixture,
-					Probabilities: [3]float64{probabilities[0], probabilities[1], probabilities[2]},
+					Fixture:        fixture,
+					Probabilities:  [3]float64{probabilities[0], probabilities[1], probabilities[2]},
+					AsianHandicaps: asianHandicaps,
+					TotalGoals:     totalGoals,
+					Lambdas:        lambdas,
 				})
 			}
 		}
