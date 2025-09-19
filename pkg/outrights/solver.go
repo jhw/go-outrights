@@ -175,8 +175,14 @@ func (ga *GeneticAlgorithm) optimize(objectiveFn func([]float64) float64, x0 []f
 
 type RatingsSolver struct{}
 
-func newRatingsSolver() *RatingsSolver {
+func NewRatingsSolver() *RatingsSolver {
 	return &RatingsSolver{}
+}
+
+// Solve is a public wrapper for the solver functionality
+func Solve(events []Event, results []Result, ratings map[string]float64, timePowerWeighting float64, options map[string]interface{}) map[string]interface{} {
+	solver := NewRatingsSolver()
+	return solver.solve(events, results, ratings, timePowerWeighting, options)
 }
 
 func (rs *RatingsSolver) calcError(events []Event, ratings map[string]float64, homeAdvantage, timePowerWeighting float64) float64 {
@@ -286,7 +292,7 @@ func (rs *RatingsSolver) optimizeRatingsAndBias(events []Event, ratings map[stri
 }
 
 func (rs *RatingsSolver) initializeRatingsFromLeagueTable(teamNames []string, results []Result) map[string]float64 {
-	leagueTable := calcLeagueTable(teamNames, results, make(map[string]int))
+	leagueTable := CalcLeagueTable(teamNames, results, make(map[string]int))
 	
 	// Check if we have any results
 	hasResults := false

@@ -2,7 +2,7 @@ package outrights
 
 
 // calcPPGRatings calculates points per game ratings for teams based on their Poisson ratings
-func calcPPGRatings(teamNames []string, ratings map[string]float64, homeAdvantage float64) map[string]float64 {
+func CalcPPGRatings(teamNames []string, ratings map[string]float64, homeAdvantage float64) map[string]float64 {
 	ppgRatings := make(map[string]float64)
 	
 	// Initialize ratings

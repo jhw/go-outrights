@@ -1,14 +1,16 @@
-package outrights
+package endpoints
 
 import (
 	"errors"
 	"fmt"
 	"sort"
+	
+	"github.com/jhw/go-outrights/pkg/outrights"
 )
 
 
-// Simulate processes events and markets and returns simulation results
-func Simulate(results []Result, events []Event, markets []Market, handicaps map[string]int, opts ...SimOptions) (SimulationResult, error) {
+// SimulateSeason processes events and markets and returns simulation results
+func SimulateSeason(results []outrights.Result, events []outrights.Event, markets []outrights.Market, handicaps map[string]int, opts ...outrights.SimOptions) (outrights.SimulationResult, error) {
 	// Set defaults
 	generations := 1000
 	npaths := 5000
@@ -63,17 +65,17 @@ func Simulate(results []Result, events []Event, markets []Market, handicaps map[
 	
 	// Validate that events are not empty
 	if len(events) == 0 {
-		return SimulationResult{}, errors.New("events cannot be empty")
+		return outrights.SimulationResult{}, errors.New("events cannot be empty")
 	}
 	
 	if len(results) == 0 {
-		return SimulationResult{}, errors.New("results cannot be empty")
+		return outrights.SimulationResult{}, errors.New("results cannot be empty")
 	}
 	
 	// Extract team names from results
 	teamNamesMap := make(map[string]bool)
 	for _, result := range results {
-		homeTeam, awayTeam := parseEventName(result.Name)
+		homeTeam, awayTeam := outrights.ParseEventName(result.Name)
 		if homeTeam != "" && awayTeam != "" {
 			teamNamesMap[homeTeam] = true
 			teamNamesMap[awayTeam] = true
@@ -87,7 +89,7 @@ func Simulate(results []Result, events []Event, markets []Market, handicaps map[
 	
 	// Validate that team names are not empty
 	if len(teamNames) == 0 {
-		return SimulationResult{}, errors.New("no valid team names found in results")
+		return outrights.SimulationResult{}, errors.New("no valid team names found in results")
 	}
 	
 	// Validate handicaps keys against extracted team names
@@ -100,7 +102,7 @@ func Simulate(results []Result, events []Event, markets []Market, handicaps map[
 			}
 		}
 		if !found {
-			return SimulationResult{}, fmt.Errorf("handicaps contains unknown team: %s", teamName)
+			return outrights.SimulationResult{}, fmt.Errorf("handicaps contains unknown team: %s", teamName)
 		}
 	}
 	
@@ -113,7 +115,7 @@ func Simulate(results []Result, events []Event, markets []Market, handicaps map[
 	})
 	
 	// Create simulation request
-	req := SimulationRequest{
+	req := outrights.SimulationRequest{
 		Ratings:         make(map[string]float64),
 		Results:         results,
 		Events:          events,
@@ -137,13 +139,13 @@ func Simulate(results []Result, events []Event, markets []Market, handicaps map[
 	
 	result, err := ProcessSimulation(req, generations, rounds, debug)
 	if err != nil {
-		return SimulationResult{}, err
+		return outrights.SimulationResult{}, err
 	}
 	return result, nil
 }
 
 // ProcessSimulation processes a simulation request and returns results
-func ProcessSimulation(req SimulationRequest, generations int, rounds int, debug bool) (SimulationResult, error) {
+func ProcessSimulation(req outrights.SimulationRequest, generations int, rounds int, debug bool) (outrights.SimulationResult, error) {
 	teamNames := make([]string, 0, len(req.Ratings))
 	for name := range req.Ratings {
 		teamNames = append(teamNames, name)
@@ -151,16 +153,13 @@ func ProcessSimulation(req SimulationRequest, generations int, rounds int, debug
 	sort.Strings(teamNames)
 	
 	// Initialize markets
-	if err := InitMarkets(teamNames, req.Markets); err != nil {
-		return SimulationResult{}, err
+	if err := outrights.InitMarkets(teamNames, req.Markets); err != nil {
+		return outrights.SimulationResult{}, err
 	}
 	
 	// Calculate league table and remaining fixtures
-	leagueTable := calcLeagueTable(teamNames, req.Results, req.Handicaps)
-	remainingFixtures := calcRemainingFixtures(teamNames, req.Results, rounds)
-	
-	// Solve for ratings
-	solver := newRatingsSolver()
+	leagueTable := outrights.CalcLeagueTable(teamNames, req.Results, req.Handicaps)
+	remainingFixtures := outrights.CalcRemainingFixtures(teamNames, req.Results, rounds)
 	
 	// Create options map
 	options := map[string]interface{}{
@@ -176,7 +175,7 @@ func ProcessSimulation(req SimulationRequest, generations int, rounds int, debug
 	}
 	
 	// Solve for ratings using events for training and results for initialization
-	solverResp := solver.solve(req.Events, req.Results, req.Ratings, req.TimePowerWeighting, options)
+	solverResp := outrights.Solve(req.Events, req.Results, req.Ratings, req.TimePowerWeighting, options)
 	
 	// Extract results
 	poissonRatings := solverResp["ratings"].(map[string]float64)
@@ -184,20 +183,20 @@ func ProcessSimulation(req SimulationRequest, generations int, rounds int, debug
 	solverError := solverResp["error"].(float64)
 	
 	// Run simulation
-	simPoints := newSimPoints(leagueTable, req.NPaths)
+	simPoints := outrights.NewSimPoints(leagueTable, req.NPaths)
 	
 	for _, eventName := range remainingFixtures {
-		simPoints.simulate(eventName, poissonRatings, homeAdvantage)
+		simPoints.Simulate(eventName, poissonRatings, homeAdvantage)
 	}
 	
 	// Calculate position probabilities
 	// positionProbs := calcPositionProbabilities(simPoints, req.Markets)
 	
 	// Calculate PPG ratings 
-	ppgRatings := calcPPGRatings(teamNames, poissonRatings, homeAdvantage)
+	ppgRatings := outrights.CalcPPGRatings(teamNames, poissonRatings, homeAdvantage)
 	
 	// Calculate expected points from the actual simulation results (not deterministic calculation)
-	expectedPoints := simPoints.calculateExpectedSeasonPoints()
+	expectedPoints := simPoints.CalculateExpectedSeasonPoints()
 	
 	// Update league table with ratings and expected points
 	for i := range leagueTable {
@@ -219,7 +218,7 @@ func ProcessSimulation(req SimulationRequest, generations int, rounds int, debug
 	})
 	
 	// Calculate position probabilities for markets
-	positionProbabilities := calcPositionProbabilities(simPoints, req.Markets)
+	positionProbabilities := outrights.CalcPositionProbabilities(simPoints, req.Markets)
 	
 	// Assign position probabilities to teams
 	if defaultProbs, exists := positionProbabilities["default"]; exists {
@@ -231,12 +230,12 @@ func ProcessSimulation(req SimulationRequest, generations int, rounds int, debug
 	}
 	
 	// Calculate outright marks
-	outrightMarks := calcOutrightMarks(positionProbabilities, req.Markets)
+	outrightMarks := outrights.CalcOutrightMarks(positionProbabilities, req.Markets)
 	
 	// Calculate fixture odds for all possible team matchups
-	fixtureOdds := calcAllFixtureOdds(teamNames, poissonRatings, homeAdvantage)
+	fixtureOdds := outrights.CalcAllFixtureOdds(teamNames, poissonRatings, homeAdvantage)
 	
-	return SimulationResult{
+	return outrights.SimulationResult{
 		Teams:         leagueTable,
 		OutrightMarks: outrightMarks,
 		FixtureOdds:   fixtureOdds,

@@ -11,7 +11,7 @@ type SimPoints struct {
 	GoalDifference [][]int
 }
 
-func newSimPoints(leagueTable []Team, nPaths int) *SimPoints {
+func NewSimPoints(leagueTable []Team, nPaths int) *SimPoints {
 	sp := &SimPoints{
 		NPaths:         nPaths,
 		TeamNames:      make([]string, len(leagueTable)),
@@ -43,7 +43,7 @@ func (sp *SimPoints) getTeamIndex(teamName string) int {
 	return -1
 }
 
-func (sp *SimPoints) simulate(eventName string, ratings map[string]float64, homeAdvantage float64) {
+func (sp *SimPoints) Simulate(eventName string, ratings map[string]float64, homeAdvantage float64) {
 	matrix := newScoreMatrix(eventName, ratings, homeAdvantage)
 	scores := matrix.simulateScores(sp.NPaths)
 	sp.updateEvent(eventName, scores)
@@ -104,7 +104,7 @@ func (sp *SimPoints) updateAwayTeam(teamName string, scores [][]int) {
 }
 
 func (sp *SimPoints) updateEvent(eventName string, scores [][]int) {
-	homeTeam, awayTeam := parseEventName(eventName)
+	homeTeam, awayTeam := ParseEventName(eventName)
 	sp.updateHomeTeam(homeTeam, scores)
 	sp.updateAwayTeam(awayTeam, scores)
 }
@@ -201,7 +201,7 @@ func (sp *SimPoints) positionProbabilities(teamNames []string) map[string][]floa
 }
 
 // calculateExpectedSeasonPoints calculates expected season points from the actual simulation results
-func (sp *SimPoints) calculateExpectedSeasonPoints() map[string]float64 {
+func (sp *SimPoints) CalculateExpectedSeasonPoints() map[string]float64 {
 	expectedPoints := make(map[string]float64)
 	
 	for i, teamName := range sp.TeamNames {

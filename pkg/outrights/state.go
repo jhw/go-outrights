@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-func calcLeagueTable(teamNames []string, results []Result, handicaps map[string]int) []Team {
+func CalcLeagueTable(teamNames []string, results []Result, handicaps map[string]int) []Team {
 	teams := make(map[string]*Team)
 	
 	// Initialize teams
@@ -27,7 +27,7 @@ func calcLeagueTable(teamNames []string, results []Result, handicaps map[string]
 	
 	// Process results
 	for _, result := range results {
-		homeTeam, awayTeam := parseEventName(result.Name)
+		homeTeam, awayTeam := ParseEventName(result.Name)
 		
 		// Skip if we don't have match result data
 		if len(result.Score) != 2 {
@@ -82,7 +82,7 @@ func calcLeagueTable(teamNames []string, results []Result, handicaps map[string]
 	return result
 }
 
-func calcRemainingFixtures(teamNames []string, results []Result, rounds int) []string {
+func CalcRemainingFixtures(teamNames []string, results []Result, rounds int) []string {
 	// Count how many times each fixture has been played
 	playedCounts := make(map[string]int)
 	
@@ -113,7 +113,7 @@ func calcRemainingFixtures(teamNames []string, results []Result, rounds int) []s
 	return remainingFixtures
 }
 
-func parseEventName(eventName string) (string, string) {
+func ParseEventName(eventName string) (string, string) {
 	parts := strings.Split(eventName, " vs ")
 	if len(parts) != 2 {
 		return "", ""
@@ -125,7 +125,7 @@ func getTeamNamesFromEvents(events []Event) []string {
 	teamSet := make(map[string]bool)
 	
 	for _, event := range events {
-		homeTeam, awayTeam := parseEventName(event.Name)
+		homeTeam, awayTeam := ParseEventName(event.Name)
 		if homeTeam != "" && awayTeam != "" {
 			teamSet[homeTeam] = true
 			teamSet[awayTeam] = true

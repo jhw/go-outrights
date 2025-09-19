@@ -7,7 +7,7 @@ import (
 )
 
 // calcPositionProbabilities calculates position probabilities for each market using simulation results
-func calcPositionProbabilities(simPoints *SimPoints, markets []Market) map[string]map[string][]float64 {
+func CalcPositionProbabilities(simPoints *SimPoints, markets []Market) map[string]map[string][]float64 {
 	positionProbs := make(map[string]map[string][]float64)
 	
 	// Cache to avoid duplicate calculations for same team sets
@@ -47,7 +47,7 @@ func calcPositionProbabilities(simPoints *SimPoints, markets []Market) map[strin
 }
 
 // calcOutrightMarks calculates outright marks for each market based on position probabilities
-func calcOutrightMarks(positionProbabilities map[string]map[string][]float64, markets []Market) []OutrightMark {
+func CalcOutrightMarks(positionProbabilities map[string]map[string][]float64, markets []Market) []OutrightMark {
 	var marks []OutrightMark
 	
 	for _, market := range markets {
@@ -79,7 +79,7 @@ func calcOutrightMarks(positionProbabilities map[string]map[string][]float64, ma
 }
 
 // calcAllFixtureOdds calculates match odds for all possible team matchups in the league
-func calcAllFixtureOdds(teamNames []string, ratings map[string]float64, homeAdvantage float64) []FixtureOdds {
+func CalcAllFixtureOdds(teamNames []string, ratings map[string]float64, homeAdvantage float64) []FixtureOdds {
 	var fixtureOdds []FixtureOdds
 	
 	// Generate odds for all team combinations (n * (n-1) fixtures)

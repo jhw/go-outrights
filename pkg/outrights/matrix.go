@@ -21,7 +21,7 @@ type ScoreMatrix struct {
 }
 
 func newScoreMatrix(eventName string, ratings map[string]float64, homeAdvantage float64) *ScoreMatrix {
-	homeTeam, awayTeam := parseEventName(eventName)
+	homeTeam, awayTeam := ParseEventName(eventName)
 	homeLambda := ratings[homeTeam] + homeAdvantage
 	awayLambda := ratings[awayTeam]
 	

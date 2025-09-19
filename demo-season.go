@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/jhw/go-outrights/pkg/outrights"
+	"github.com/jhw/go-outrights/pkg/outrights/endpoints"
 )
 
 func main() {
@@ -130,7 +131,7 @@ func main() {
 		Debug:              debug,
 	}
 	
-	result, err := outrights.Simulate(results, events, markets, make(map[string]int), opts)
+	result, err := endpoints.SimulateSeason(results, events, markets, make(map[string]int), opts)
 	if err != nil {
 		log.Fatalf("Simulation error: %v", err)
 	}
