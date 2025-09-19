@@ -46,9 +46,17 @@ func solveIndividualMatch(match outrights.EventMatch) (outrights.EventSolution, 
 		return outrights.EventSolution{}, fmt.Errorf("error normalizing probabilities: %v", err)
 	}
 
+	// Get team names from fixture
+	homeTeam, awayTeam := outrights.ParseEventName(match.Fixture)
+	
+	// Create unique team names for this match to avoid conflicts
+	uniqueHomeTeam := fmt.Sprintf("%s_match", homeTeam)
+	uniqueAwayTeam := fmt.Sprintf("%s_match", awayTeam)
+	uniqueFixture := fmt.Sprintf("%s vs %s", uniqueHomeTeam, uniqueAwayTeam)
+
 	// Create a synthetic event for the solver with the target probabilities
 	event := outrights.Event{
-		Name: match.Fixture,
+		Name: uniqueFixture,
 		MatchOdds: outrights.MatchOdds{
 			Prices: []float64{
 				1.0 / targetProbs[0], // Convert back to prices for consistency
@@ -60,22 +68,27 @@ func solveIndividualMatch(match outrights.EventMatch) (outrights.EventSolution, 
 	
 	// Set up solver options for single match optimization
 	options := map[string]interface{}{
-		"generations":            100,
+		"generations":            50,  // Fewer generations for single match
 		"population_size":        8,
 		"mutation_factor":        0.1,
 		"elite_ratio":            0.1,
-		"init_std":               0.5,
-		"log_interval":           25,
+		"init_std":               1.0,  // Higher variance for exploration
+		"log_interval":           10,
 		"decay_exponent":         0.5,
-		"mutation_probability":   0.1,
+		"mutation_probability":   0.2,  // Higher mutation for exploration
 		"debug":                  false,
-		"use_league_table_init":  false,
+		"use_league_table_init":  false, // Don't use league table init
+	}
+
+	// Initialize ratings with reasonable starting values for both teams
+	ratings := map[string]float64{
+		uniqueHomeTeam: 1.0,  // Start with equal ratings
+		uniqueAwayTeam: 1.0,
 	}
 
 	// Create minimal inputs for solver
 	events := []outrights.Event{event}
 	results := []outrights.Result{} // Empty - we're solving from market prices only
-	ratings := map[string]float64{} // Will be initialized by solver
 
 	// Solve for optimal lambdas and home advantage
 	solverResp := outrights.Solve(events, results, ratings, 1.0, options)
@@ -84,13 +97,10 @@ func solveIndividualMatch(match outrights.EventMatch) (outrights.EventSolution, 
 	solvedRatings := solverResp["ratings"].(map[string]float64)
 	homeAdvantage := solverResp["home_advantage"].(float64)
 	solverError := solverResp["error"].(float64)
-
-	// Get team names from fixture
-	homeTeam, awayTeam := outrights.ParseEventName(match.Fixture)
 	
 	// Calculate final lambdas
-	homeLambda := solvedRatings[homeTeam] + homeAdvantage
-	awayLambda := solvedRatings[awayTeam]
+	homeLambda := solvedRatings[uniqueHomeTeam] + homeAdvantage
+	awayLambda := solvedRatings[uniqueAwayTeam]
 
 	// Create score matrix with solved lambdas
 	matrix := createScoreMatrixFromLambdas(match.Fixture, homeLambda, awayLambda)
