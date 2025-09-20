@@ -181,20 +181,11 @@ func (sm *ScoreMatrix) TotalGoals() [][2]interface{} {
 }
 
 func extractMarketProbabilities(event Event) []float64 {
-	prices := event.MatchOdds.Prices
-	probs := make([]float64, len(prices))
-	overround := 0.0
-	
-	for i, price := range prices {
-		probs[i] = 1.0 / price
-		overround += probs[i]
+	probs, err := NormalizeProbabilities(event.MatchOdds.Prices)
+	if err != nil {
+		// Return zero probabilities on error (should not happen with valid data)
+		return make([]float64, len(event.MatchOdds.Prices))
 	}
-	
-	// Normalize
-	for i := range probs {
-		probs[i] /= overround
-	}
-	
 	return probs
 }
 

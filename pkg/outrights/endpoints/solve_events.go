@@ -41,7 +41,8 @@ func SolveEvents(request outrights.SolveEventsRequest) (outrights.SolveEventsRes
 // solveIndividualMatch solves for a single match using the existing solver infrastructure
 func solveIndividualMatch(match outrights.EventMatch) (outrights.EventSolution, error) {
 	// Convert match odds prices to normalized probabilities
-	targetProbs, err := normalizeProbabilities(match.MatchOdds)
+	matchOddsSlice := match.MatchOdds[:]
+	targetProbs, err := outrights.NormalizeProbabilities(matchOddsSlice)
 	if err != nil {
 		return outrights.EventSolution{}, fmt.Errorf("error normalizing probabilities: %v", err)
 	}
@@ -124,27 +125,4 @@ func solveIndividualMatch(match outrights.EventMatch) (outrights.EventSolution, 
 	}, nil
 }
 
-// normalizeProbabilities converts match odds prices to normalized probabilities
-func normalizeProbabilities(prices [3]float64) ([3]float64, error) {
-	if prices[0] <= 0 || prices[1] <= 0 || prices[2] <= 0 {
-		return [3]float64{}, errors.New("all prices must be positive")
-	}
-
-	// Convert prices to implied probabilities
-	probs := [3]float64{
-		1.0 / prices[0],
-		1.0 / prices[1],
-		1.0 / prices[2],
-	}
-
-	// Calculate total (overround)
-	total := probs[0] + probs[1] + probs[2]
-
-	// Normalize to sum to 1.0
-	return [3]float64{
-		probs[0] / total,
-		probs[1] / total,
-		probs[2] / total,
-	}, nil
-}
 
