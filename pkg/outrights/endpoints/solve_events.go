@@ -25,13 +25,13 @@ type EventSolution struct {
 	Probabilities   [3]float64       `json:"probabilities"`    // [home_win, draw, away_win] 
 	AsianHandicaps  [][2]interface{} `json:"asian_handicaps"`  // [(handicap, probabilities)]
 	TotalGoals      [][2]interface{} `json:"total_goals"`      // [(line, [under, over])]
+	HomeAdvantage   float64          `json:"home_advantage"`   // Home advantage for this match
 	SolverError     float64          `json:"solver_error"`     // Fit quality
 }
 
 // SolveEventsResult represents the output for solve-events workflow  
 type SolveEventsResult struct {
-	Solutions     []EventSolution `json:"solutions"`
-	HomeAdvantage float64         `json:"home_advantage"`
+	Solutions []EventSolution `json:"solutions"`
 }
 
 // SolveEvents processes match odds and solves for lambdas and comprehensive betting markets
@@ -51,17 +51,8 @@ func SolveEvents(request SolveEventsRequest) (SolveEventsResult, error) {
 		solutions = append(solutions, solution)
 	}
 
-	// Calculate average home advantage from all solutions
-	avgHomeAdvantage := 0.0
-	for _, solution := range solutions {
-		// Extract home advantage from lambdas (difference between home and away after accounting for team strength)
-		avgHomeAdvantage += solution.Lambdas[0] - solution.Lambdas[1]
-	}
-	avgHomeAdvantage /= float64(len(solutions))
-
 	return SolveEventsResult{
-		Solutions:     solutions,
-		HomeAdvantage: avgHomeAdvantage,
+		Solutions: solutions,
 	}, nil
 }
 
@@ -148,6 +139,7 @@ func solveIndividualMatch(match EventMatch) (EventSolution, error) {
 		Probabilities:  [3]float64{probabilities[0], probabilities[1], probabilities[2]},
 		AsianHandicaps: asianHandicaps,
 		TotalGoals:     totalGoals,
+		HomeAdvantage:  homeAdvantage,
 		SolverError:    solverError,
 	}, nil
 }
