@@ -2,42 +2,9 @@ package outrights
 
 import (
 	"fmt"
-	"math"
 )
 
 // Mathematical utility functions
-
-
-// mean calculates the arithmetic mean of a slice
-func mean(x []float64) float64 {
-	if len(x) == 0 {
-		return 0
-	}
-	sum := 0.0
-	for _, v := range x {
-		sum += v
-	}
-	return sum / float64(len(x))
-}
-
-// variance calculates the sample variance of a slice
-func variance(x []float64) float64 {
-	if len(x) <= 1 {
-		return 0
-	}
-	m := mean(x)
-	sum := 0.0
-	for _, v := range x {
-		diff := v - m
-		sum += diff * diff
-	}
-	return sum / float64(len(x)-1) // Sample variance uses n-1
-}
-
-// stdDeviation calculates the standard deviation of a slice
-func stdDeviation(x []float64) float64 {
-	return math.Sqrt(variance(x))
-}
 
 // sumProduct calculates the dot product of two float64 slices
 func sumProduct(x, y []float64) float64 {
