@@ -134,21 +134,23 @@ func (sm *ScoreMatrix) AsianHandicaps() [][2]interface{} {
 	
 	// Calculate handicaps from -4.5 to +4.5 (based on N-1 to handle matrix bounds)
 	maxHandicap := float64(sm.N - 1)
-	for handicap := -maxHandicap + 0.5; handicap <= maxHandicap - 0.5; handicap += 0.5 {
+	for i, handicap := 0, -maxHandicap + 0.5; handicap <= maxHandicap - 0.5; i, handicap = i+1, handicap+0.5 {
 		var probs interface{}
 		
-		if handicap == float64(int(handicap)) {
-			// Integer handicap: [home_win, draw, away_win]
-			homeWin := sm.probability(func(i, j int) bool { return float64(i) + handicap > float64(j) })
-			draw := sm.probability(func(i, j int) bool { return float64(i) + handicap == float64(j) })
-			awayWin := sm.probability(func(i, j int) bool { return float64(i) + handicap < float64(j) })
+		// Integer handicaps occur at odd indices (since we start at -N+0.5 and increment by 0.5)
+		if i%2 == 1 {
+			// Integer handicap: [home_win, draw, away_win] - use integer arithmetic to avoid float precision issues
+			intHandicap := int(handicap)
+			homeWin := sm.probability(func(home, away int) bool { return home + intHandicap > away })
+			draw := sm.probability(func(home, away int) bool { return home + intHandicap == away })
+			awayWin := sm.probability(func(home, away int) bool { return home + intHandicap < away })
 			
 			total := homeWin + draw + awayWin
 			probs = [3]float64{homeWin / total, draw / total, awayWin / total}
 		} else {
 			// Half handicap: [home_win, away_win] 
-			homeWin := sm.probability(func(i, j int) bool { return float64(i) + handicap > float64(j) })
-			awayWin := sm.probability(func(i, j int) bool { return float64(i) + handicap < float64(j) })
+			homeWin := sm.probability(func(home, away int) bool { return float64(home) + handicap > float64(away) })
+			awayWin := sm.probability(func(home, away int) bool { return float64(home) + handicap < float64(away) })
 			
 			total := homeWin + awayWin
 			probs = [2]float64{homeWin / total, awayWin / total}
