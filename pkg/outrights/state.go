@@ -121,22 +121,3 @@ func ParseEventName(eventName string) (string, string) {
 	return parts[0], parts[1]
 }
 
-func getTeamNamesFromEvents(events []Event) []string {
-	teamSet := make(map[string]bool)
-	
-	for _, event := range events {
-		homeTeam, awayTeam := ParseEventName(event.Name)
-		if homeTeam != "" && awayTeam != "" {
-			teamSet[homeTeam] = true
-			teamSet[awayTeam] = true
-		}
-	}
-	
-	teamNames := make([]string, 0, len(teamSet))
-	for name := range teamSet {
-		teamNames = append(teamNames, name)
-	}
-	
-	sort.Strings(teamNames)
-	return teamNames
-}
