@@ -193,7 +193,7 @@ func ProcessSimulation(req outrights.SimulationRequest, generations int, rounds 
 	// positionProbs := calcPositionProbabilities(simPoints, req.Markets)
 	
 	// Calculate PPG ratings 
-	ppgRatings := outrights.CalcPPGRatings(teamNames, poissonRatings, homeAdvantage)
+	ppgRatings := calcPPGRatings(teamNames, poissonRatings, homeAdvantage)
 	
 	// Calculate expected points from the actual simulation results (not deterministic calculation)
 	expectedPoints := simPoints.CalculateExpectedSeasonPoints()
@@ -244,11 +244,36 @@ func ProcessSimulation(req outrights.SimulationRequest, generations int, rounds 
 	}, nil
 }
 
-
-
-
-
-
-
-
-
+// calcPPGRatings calculates points per game ratings for teams based on their Poisson ratings
+func calcPPGRatings(teamNames []string, ratings map[string]float64, homeAdvantage float64) map[string]float64 {
+	ppgRatings := make(map[string]float64)
+	
+	// Initialize ratings
+	for _, name := range teamNames {
+		ppgRatings[name] = 0.0
+	}
+	
+	// Calculate expected points for each team against every other team
+	for _, homeTeam := range teamNames {
+		for _, awayTeam := range teamNames {
+			if homeTeam != awayTeam {
+				eventName := homeTeam + " vs " + awayTeam
+				matrix := outrights.NewScoreMatrix(eventName, ratings, homeAdvantage)
+				odds := matrix.MatchOdds()
+				
+				// Expected points: home wins = 3 pts, draw = 1 pt each, away win = 0/3 pts
+				ppgRatings[homeTeam] += 3*odds[0] + odds[1]  // 3*home_win + 1*draw
+				ppgRatings[awayTeam] += 3*odds[2] + odds[1]  // 3*away_win + 1*draw
+			}
+		}
+	}
+	
+	// Normalize by total number of games each team plays
+	// Each team plays against every other team both home and away
+	totalGames := float64(2 * (len(teamNames) - 1))
+	for name := range ppgRatings {
+		ppgRatings[name] /= totalGames
+	}
+	
+	return ppgRatings
+}
