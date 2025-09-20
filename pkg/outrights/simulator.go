@@ -204,3 +204,4 @@ func (sp *SimPoints) positionProbabilities(teamNames []string) map[string][]floa
 func (sp *SimPoints) GetSimulationData() (teamNames []string, points [][]int, nPaths int) {
 	return sp.TeamNames, sp.Points, sp.NPaths
 }
+

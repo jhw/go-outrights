@@ -2,6 +2,7 @@ package outrights
 
 import (
 	"fmt"
+	"strings"
 )
 
 // Mathematical utility functions
@@ -37,4 +38,13 @@ func NormalizeProbabilities(prices []float64) ([]float64, error) {
 	}
 
 	return probs, nil
+}
+
+// ParseEventName parses event name into home and away team names
+func ParseEventName(eventName string) (string, string) {
+	parts := strings.Split(eventName, " vs ")
+	if len(parts) != 2 {
+		return "", ""
+	}
+	return parts[0], parts[1]
 }

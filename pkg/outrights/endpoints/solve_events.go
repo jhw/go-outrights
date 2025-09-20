@@ -7,19 +7,46 @@ import (
 	"github.com/jhw/go-outrights/pkg/outrights"
 )
 
+// EventMatch represents a single match for solve-events workflow
+type EventMatch struct {
+	Fixture       string    `json:"fixture"`        // "Home Team vs Away Team"  
+	MatchOdds     [3]float64 `json:"match_odds"`     // [home_price, draw_price, away_price]
+}
+
+// SolveEventsRequest represents the input for solve-events workflow
+type SolveEventsRequest struct {
+	Matches []EventMatch `json:"matches"`
+}
+
+// EventSolution represents the solution for a single event
+type EventSolution struct {
+	Fixture         string           `json:"fixture"`
+	Lambdas         [2]float64       `json:"lambdas"`          // [home_lambda, away_lambda]
+	Probabilities   [3]float64       `json:"probabilities"`    // [home_win, draw, away_win] 
+	AsianHandicaps  [][2]interface{} `json:"asian_handicaps"`  // [(handicap, probabilities)]
+	TotalGoals      [][2]interface{} `json:"total_goals"`      // [(line, [under, over])]
+	SolverError     float64          `json:"solver_error"`     // Fit quality
+}
+
+// SolveEventsResult represents the output for solve-events workflow  
+type SolveEventsResult struct {
+	Solutions     []EventSolution `json:"solutions"`
+	HomeAdvantage float64         `json:"home_advantage"`
+}
+
 // SolveEvents processes match odds and solves for lambdas and comprehensive betting markets
-func SolveEvents(request outrights.SolveEventsRequest) (outrights.SolveEventsResult, error) {
+func SolveEvents(request SolveEventsRequest) (SolveEventsResult, error) {
 	if len(request.Matches) == 0 {
-		return outrights.SolveEventsResult{}, errors.New("no matches provided")
+		return SolveEventsResult{}, errors.New("no matches provided")
 	}
 
-	var solutions []outrights.EventSolution
+	var solutions []EventSolution
 
 	// Process each match independently
 	for _, match := range request.Matches {
 		solution, err := solveIndividualMatch(match)
 		if err != nil {
-			return outrights.SolveEventsResult{}, fmt.Errorf("error solving match %s: %v", match.Fixture, err)
+			return SolveEventsResult{}, fmt.Errorf("error solving match %s: %v", match.Fixture, err)
 		}
 		solutions = append(solutions, solution)
 	}
@@ -32,19 +59,19 @@ func SolveEvents(request outrights.SolveEventsRequest) (outrights.SolveEventsRes
 	}
 	avgHomeAdvantage /= float64(len(solutions))
 
-	return outrights.SolveEventsResult{
+	return SolveEventsResult{
 		Solutions:     solutions,
 		HomeAdvantage: avgHomeAdvantage,
 	}, nil
 }
 
 // solveIndividualMatch solves for a single match using the existing solver infrastructure
-func solveIndividualMatch(match outrights.EventMatch) (outrights.EventSolution, error) {
+func solveIndividualMatch(match EventMatch) (EventSolution, error) {
 	// Convert match odds prices to normalized probabilities
 	matchOddsSlice := match.MatchOdds[:]
 	targetProbs, err := outrights.NormalizeProbabilities(matchOddsSlice)
 	if err != nil {
-		return outrights.EventSolution{}, fmt.Errorf("error normalizing probabilities: %v", err)
+		return EventSolution{}, fmt.Errorf("error normalizing probabilities: %v", err)
 	}
 
 	// Get team names from fixture
@@ -115,7 +142,7 @@ func solveIndividualMatch(match outrights.EventMatch) (outrights.EventSolution, 
 	asianHandicaps := matrix.AsianHandicaps()
 	totalGoals := matrix.TotalGoals()
 
-	return outrights.EventSolution{
+	return EventSolution{
 		Fixture:        match.Fixture,
 		Lambdas:        [2]float64{homeLambda, awayLambda},
 		Probabilities:  [3]float64{probabilities[0], probabilities[1], probabilities[2]},

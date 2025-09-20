@@ -1,20 +1,5 @@
 package outrights
 
-// SimOptions holds optional configuration for Simulate
-type SimOptions struct {
-	Generations          int
-	NPaths               int
-	Rounds               int
-	TimePowerWeighting   float64
-	PopulationSize       int
-	MutationFactor       float64
-	EliteRatio           float64
-	InitStd              float64
-	LogInterval          int
-	DecayExponent        float64
-	MutationProbability  float64
-	Debug                bool
-}
 
 type MatchOdds struct {
 	Prices []float64 `json:"prices"`
@@ -66,56 +51,3 @@ type FixtureOdds struct {
 	Lambdas         [2]float64      `json:"lambdas"`          // [home_lambda, away_lambda]
 }
 
-type SimulationResult struct {
-	Teams           []Team         `json:"teams"`
-	OutrightMarks   []OutrightMark `json:"outright_marks"`
-	FixtureOdds     []FixtureOdds  `json:"fixture_odds"`
-	HomeAdvantage   float64        `json:"home_advantage"`
-	SolverError     float64        `json:"solver_error"`
-}
-
-type SimulationRequest struct {
-	Ratings     map[string]float64 `json:"ratings"`
-	Results     []Result           `json:"results"`
-	Events      []Event            `json:"events"`
-	Handicaps   map[string]int     `json:"handicaps"`
-	Markets     []Market           `json:"markets"`
-	
-	// Solver parameters
-	PopulationSize        int     `json:"population_size"`
-	MutationFactor        float64 `json:"mutation_factor"`
-	EliteRatio            float64 `json:"elite_ratio"`
-	InitStd               float64 `json:"init_std"`
-	LogInterval           int     `json:"log_interval"`
-	DecayExponent         float64 `json:"decay_exponent"`
-	MutationProbability   float64 `json:"mutation_probability"`
-	NPaths                int     `json:"n_paths"`
-	TimePowerWeighting    float64 `json:"time_power_weighting"`
-}
-
-// EventMatch represents a single match for solve-events workflow
-type EventMatch struct {
-	Fixture       string    `json:"fixture"`        // "Home Team vs Away Team"  
-	MatchOdds     [3]float64 `json:"match_odds"`     // [home_price, draw_price, away_price]
-}
-
-// SolveEventsRequest represents the input for solve-events workflow
-type SolveEventsRequest struct {
-	Matches []EventMatch `json:"matches"`
-}
-
-// EventSolution represents the solution for a single event
-type EventSolution struct {
-	Fixture         string           `json:"fixture"`
-	Lambdas         [2]float64       `json:"lambdas"`          // [home_lambda, away_lambda]
-	Probabilities   [3]float64       `json:"probabilities"`    // [home_win, draw, away_win] 
-	AsianHandicaps  [][2]interface{} `json:"asian_handicaps"`  // [(handicap, probabilities)]
-	TotalGoals      [][2]interface{} `json:"total_goals"`      // [(line, [under, over])]
-	SolverError     float64          `json:"solver_error"`     // Fit quality
-}
-
-// SolveEventsResult represents the output for solve-events workflow  
-type SolveEventsResult struct {
-	Solutions     []EventSolution `json:"solutions"`
-	HomeAdvantage float64         `json:"home_advantage"`
-}

@@ -2,7 +2,6 @@ package outrights
 
 import (
 	"sort"
-	"strings"
 )
 
 func CalcLeagueTable(teamNames []string, results []Result, handicaps map[string]int) []Team {
@@ -113,11 +112,4 @@ func CalcRemainingFixtures(teamNames []string, results []Result, rounds int) []s
 	return remainingFixtures
 }
 
-func ParseEventName(eventName string) (string, string) {
-	parts := strings.Split(eventName, " vs ")
-	if len(parts) != 2 {
-		return "", ""
-	}
-	return parts[0], parts[1]
-}
 

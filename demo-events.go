@@ -7,7 +7,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/jhw/go-outrights/pkg/outrights"
 	"github.com/jhw/go-outrights/pkg/outrights/endpoints"
 )
 
@@ -27,7 +26,7 @@ func main() {
 	}
 
 	// Sample match data with realistic Premier League odds
-	sampleMatches := []outrights.EventMatch{
+	sampleMatches := []endpoints.EventMatch{
 		{
 			Fixture:   "Liverpool vs Arsenal", 
 			MatchOdds: [3]float64{2.10, 3.40, 3.50}, // [home, draw, away] prices
@@ -47,7 +46,7 @@ func main() {
 	}
 
 	// Create solve-events request
-	request := outrights.SolveEventsRequest{
+	request := endpoints.SolveEventsRequest{
 		Matches: sampleMatches,
 	}
 

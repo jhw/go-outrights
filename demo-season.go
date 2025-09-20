@@ -123,7 +123,7 @@ func main() {
 	log.Println("Starting simulation...")
 	
 	// Create options struct with overrides
-	opts := outrights.SimOptions{
+	opts := endpoints.SimOptions{
 		Generations:        generations,
 		NPaths:             npaths,
 		Rounds:             rounds,
@@ -198,7 +198,7 @@ func compactMarketName(name string, maxLen int) string {
 }
 
 // displayMarksTables displays marks in a formatted table
-func displayMarksTables(result *outrights.SimulationResult) {
+func displayMarksTables(result *endpoints.SimulationResult) {
 	// Group marks by team
 	teamMarks := make(map[string]map[string]float64)
 	marketNames := make(map[string]bool)

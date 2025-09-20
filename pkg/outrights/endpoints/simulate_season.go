@@ -8,9 +8,52 @@ import (
 	"github.com/jhw/go-outrights/pkg/outrights"
 )
 
+// SimOptions holds optional configuration for Simulate
+type SimOptions struct {
+	Generations          int
+	NPaths               int
+	Rounds               int
+	TimePowerWeighting   float64
+	PopulationSize       int
+	MutationFactor       float64
+	EliteRatio           float64
+	InitStd              float64
+	LogInterval          int
+	DecayExponent        float64
+	MutationProbability  float64
+	Debug                bool
+}
+
+type SimulationResult struct {
+	Teams           []outrights.Team         `json:"teams"`
+	OutrightMarks   []outrights.OutrightMark `json:"outright_marks"`
+	FixtureOdds     []outrights.FixtureOdds  `json:"fixture_odds"`
+	HomeAdvantage   float64        `json:"home_advantage"`
+	SolverError     float64        `json:"solver_error"`
+}
+
+type SimulationRequest struct {
+	Ratings     map[string]float64 `json:"ratings"`
+	Results     []outrights.Result           `json:"results"`
+	Events      []outrights.Event            `json:"events"`
+	Handicaps   map[string]int     `json:"handicaps"`
+	Markets     []outrights.Market           `json:"markets"`
+	
+	// Solver parameters
+	PopulationSize        int     `json:"population_size"`
+	MutationFactor        float64 `json:"mutation_factor"`
+	EliteRatio            float64 `json:"elite_ratio"`
+	InitStd               float64 `json:"init_std"`
+	LogInterval           int     `json:"log_interval"`
+	DecayExponent         float64 `json:"decay_exponent"`
+	MutationProbability   float64 `json:"mutation_probability"`
+	NPaths                int     `json:"n_paths"`
+	TimePowerWeighting    float64 `json:"time_power_weighting"`
+}
+
 
 // SimulateSeason processes events and markets and returns simulation results
-func SimulateSeason(results []outrights.Result, events []outrights.Event, markets []outrights.Market, handicaps map[string]int, opts ...outrights.SimOptions) (outrights.SimulationResult, error) {
+func SimulateSeason(results []outrights.Result, events []outrights.Event, markets []outrights.Market, handicaps map[string]int, opts ...SimOptions) (SimulationResult, error) {
 	// Set defaults
 	generations := 1000
 	npaths := 5000
@@ -65,11 +108,11 @@ func SimulateSeason(results []outrights.Result, events []outrights.Event, market
 	
 	// Validate that events are not empty
 	if len(events) == 0 {
-		return outrights.SimulationResult{}, errors.New("events cannot be empty")
+		return SimulationResult{}, errors.New("events cannot be empty")
 	}
 	
 	if len(results) == 0 {
-		return outrights.SimulationResult{}, errors.New("results cannot be empty")
+		return SimulationResult{}, errors.New("results cannot be empty")
 	}
 	
 	// Extract team names from results
@@ -89,7 +132,7 @@ func SimulateSeason(results []outrights.Result, events []outrights.Event, market
 	
 	// Validate that team names are not empty
 	if len(teamNames) == 0 {
-		return outrights.SimulationResult{}, errors.New("no valid team names found in results")
+		return SimulationResult{}, errors.New("no valid team names found in results")
 	}
 	
 	// Validate handicaps keys against extracted team names
@@ -102,7 +145,7 @@ func SimulateSeason(results []outrights.Result, events []outrights.Event, market
 			}
 		}
 		if !found {
-			return outrights.SimulationResult{}, fmt.Errorf("handicaps contains unknown team: %s", teamName)
+			return SimulationResult{}, fmt.Errorf("handicaps contains unknown team: %s", teamName)
 		}
 	}
 	
@@ -115,7 +158,7 @@ func SimulateSeason(results []outrights.Result, events []outrights.Event, market
 	})
 	
 	// Create simulation request
-	req := outrights.SimulationRequest{
+	req := SimulationRequest{
 		Ratings:         make(map[string]float64),
 		Results:         results,
 		Events:          events,
@@ -139,13 +182,13 @@ func SimulateSeason(results []outrights.Result, events []outrights.Event, market
 	
 	result, err := ProcessSimulation(req, generations, rounds, debug)
 	if err != nil {
-		return outrights.SimulationResult{}, err
+		return SimulationResult{}, err
 	}
 	return result, nil
 }
 
 // ProcessSimulation processes a simulation request and returns results
-func ProcessSimulation(req outrights.SimulationRequest, generations int, rounds int, debug bool) (outrights.SimulationResult, error) {
+func ProcessSimulation(req SimulationRequest, generations int, rounds int, debug bool) (SimulationResult, error) {
 	teamNames := make([]string, 0, len(req.Ratings))
 	for name := range req.Ratings {
 		teamNames = append(teamNames, name)
@@ -154,7 +197,7 @@ func ProcessSimulation(req outrights.SimulationRequest, generations int, rounds 
 	
 	// Initialize markets
 	if err := outrights.InitMarkets(teamNames, req.Markets); err != nil {
-		return outrights.SimulationResult{}, err
+		return SimulationResult{}, err
 	}
 	
 	// Calculate league table and remaining fixtures
@@ -235,7 +278,7 @@ func ProcessSimulation(req outrights.SimulationRequest, generations int, rounds 
 	// Calculate fixture odds for all possible team matchups
 	fixtureOdds := outrights.CalcAllFixtureOdds(teamNames, poissonRatings, homeAdvantage)
 	
-	return outrights.SimulationResult{
+	return SimulationResult{
 		Teams:         leagueTable,
 		OutrightMarks: outrightMarks,
 		FixtureOdds:   fixtureOdds,
