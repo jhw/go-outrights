@@ -44,7 +44,7 @@ func (sp *SimPoints) getTeamIndex(teamName string) int {
 }
 
 func (sp *SimPoints) Simulate(eventName string, ratings map[string]float64, homeAdvantage float64) {
-	matrix := newScoreMatrix(eventName, ratings, homeAdvantage)
+	matrix := NewScoreMatrix(eventName, ratings, homeAdvantage)
 	scores := matrix.simulateScores(sp.NPaths)
 	sp.updateEvent(eventName, scores)
 }

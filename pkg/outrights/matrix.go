@@ -20,7 +20,7 @@ type ScoreMatrix struct {
 	N           int
 }
 
-func newScoreMatrix(eventName string, ratings map[string]float64, homeAdvantage float64) *ScoreMatrix {
+func NewScoreMatrix(eventName string, ratings map[string]float64, homeAdvantage float64) *ScoreMatrix {
 	homeTeam, awayTeam := ParseEventName(eventName)
 	homeLambda := ratings[homeTeam] + homeAdvantage
 	awayLambda := ratings[awayTeam]
@@ -64,7 +64,7 @@ func (sm *ScoreMatrix) probability(maskFn func(i, j int) bool) float64 {
 	return total
 }
 
-func (sm *ScoreMatrix) matchOdds() []float64 {
+func (sm *ScoreMatrix) MatchOdds() []float64 {
 	homeWin := sm.probability(func(i, j int) bool { return i > j })
 	draw := sm.probability(func(i, j int) bool { return i == j })
 	awayWin := sm.probability(func(i, j int) bool { return i < j })
@@ -75,12 +75,12 @@ func (sm *ScoreMatrix) matchOdds() []float64 {
 }
 
 func (sm *ScoreMatrix) expectedHomePoints() float64 {
-	odds := sm.matchOdds()
+	odds := sm.MatchOdds()
 	return 3*odds[0] + odds[1]
 }
 
 func (sm *ScoreMatrix) expectedAwayPoints() float64 {
-	odds := sm.matchOdds()
+	odds := sm.MatchOdds()
 	return 3*odds[2] + odds[1]
 }
 
@@ -128,12 +128,14 @@ func (sm *ScoreMatrix) simulateScores(nPaths int) [][]int {
 }
 
 // asianHandicaps calculates Asian handicap probabilities at half-point intervals
-func (sm *ScoreMatrix) asianHandicaps() [][2]interface{} {
+func (sm *ScoreMatrix) AsianHandicaps() [][2]interface{} {
 	var handicaps [][2]interface{}
 	
 	// Calculate handicaps from -4.5 to +4.5 (based on N-1 to handle matrix bounds)
 	maxHandicap := float64(sm.N - 1)
-	for handicap := -maxHandicap + 0.5; handicap <= maxHandicap - 0.5; handicap += 0.5 {
+	for displayHandicap := -maxHandicap + 0.5; displayHandicap <= maxHandicap - 0.5; displayHandicap += 0.5 {
+		// The actual handicap for calculation is the negative of the display handicap
+		handicap := -displayHandicap
 		var probs interface{}
 		
 		if handicap == float64(int(handicap)) {
@@ -153,14 +155,14 @@ func (sm *ScoreMatrix) asianHandicaps() [][2]interface{} {
 			probs = [2]float64{homeWin / total, awayWin / total}
 		}
 		
-		handicaps = append(handicaps, [2]interface{}{handicap, probs})
+		handicaps = append(handicaps, [2]interface{}{displayHandicap, probs})
 	}
 	
 	return handicaps
 }
 
 // totalGoals calculates over/under total goals probabilities at half-point intervals
-func (sm *ScoreMatrix) totalGoals() [][2]interface{} {
+func (sm *ScoreMatrix) TotalGoals() [][2]interface{} {
 	var totals [][2]interface{}
 	
 	// Calculate totals from 0.5 to (N-1)*2 - 0.5 goals

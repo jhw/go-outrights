@@ -15,7 +15,7 @@ func CalcPPGRatings(teamNames []string, ratings map[string]float64, homeAdvantag
 		for _, awayTeam := range teamNames {
 			if homeTeam != awayTeam {
 				eventName := homeTeam + " vs " + awayTeam
-				matrix := newScoreMatrix(eventName, ratings, homeAdvantage)
+				matrix := NewScoreMatrix(eventName, ratings, homeAdvantage)
 				
 				ppgRatings[homeTeam] += matrix.expectedHomePoints()
 				ppgRatings[awayTeam] += matrix.expectedAwayPoints()

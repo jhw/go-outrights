@@ -190,8 +190,8 @@ func (rs *RatingsSolver) calcError(events []Event, ratings map[string]float64, h
 	var totalWeight float64
 	
 	for i, event := range events {
-		matrix := newScoreMatrix(event.Name, ratings, homeAdvantage)
-		modelOdds := matrix.matchOdds()
+		matrix := NewScoreMatrix(event.Name, ratings, homeAdvantage)
+		modelOdds := matrix.MatchOdds()
 		marketProbs := extractMarketProbabilities(event)
 		
 		error := rmsError(modelOdds, marketProbs)

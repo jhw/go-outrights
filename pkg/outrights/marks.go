@@ -89,16 +89,16 @@ func CalcAllFixtureOdds(teamNames []string, ratings map[string]float64, homeAdva
 				fixture := fmt.Sprintf("%s vs %s", homeTeam, awayTeam)
 				
 				// Create score matrix for this matchup
-				matrix := newScoreMatrix(fixture, ratings, homeAdvantage)
+				matrix := NewScoreMatrix(fixture, ratings, homeAdvantage)
 				
 				// Get match probabilities [home_win, draw, away_win]
-				probabilities := matrix.matchOdds()
+				probabilities := matrix.MatchOdds()
 				
 				// Get Asian handicaps
-				asianHandicaps := matrix.asianHandicaps()
+				asianHandicaps := matrix.AsianHandicaps()
 				
 				// Get total goals over/under
-				totalGoals := matrix.totalGoals()
+				totalGoals := matrix.TotalGoals()
 				
 				// Get lambda values
 				lambdas := [2]float64{matrix.HomeLambda, matrix.AwayLambda}
