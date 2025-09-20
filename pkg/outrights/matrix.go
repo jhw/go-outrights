@@ -1,6 +1,7 @@
 package outrights
 
 import (
+	"math"
 	"math/rand"
 )
 
@@ -44,9 +45,9 @@ func (sm *ScoreMatrix) initMatrix() {
 	
 	for i := 0; i < sm.N; i++ {
 		for j := 0; j < sm.N; j++ {
-			homeProb := PoissonProb(sm.HomeLambda, i)
-			awayProb := PoissonProb(sm.AwayLambda, j)
-			adjustment := DixonColesAdjustment(i, j, sm.Rho)
+			homeProb := poissonProb(sm.HomeLambda, i)
+			awayProb := poissonProb(sm.AwayLambda, j)
+			adjustment := dixonColesAdjustment(i, j, sm.Rho)
 			sm.Matrix[i][j] = homeProb * awayProb * adjustment
 		}
 	}
@@ -180,4 +181,35 @@ func (sm *ScoreMatrix) TotalGoals() [][2]interface{} {
 	return totals
 }
 
+// factorial calculates the factorial of n
+func factorial(n int) float64 {
+	if n <= 1 {
+		return 1
+	}
+	result := 1.0
+	for i := 2; i <= n; i++ {
+		result *= float64(i)
+	}
+	return result
+}
 
+// poissonProb calculates the Poisson probability for lambda and k
+func poissonProb(lambda float64, k int) float64 {
+	return math.Pow(lambda, float64(k)) * math.Exp(-lambda) / factorial(k)
+}
+
+// dixonColesAdjustment applies Dixon-Coles adjustment for low-scoring games
+func dixonColesAdjustment(i, j int, rho float64) float64 {
+	switch {
+	case i == 0 && j == 0:
+		return 1 - (float64(i*j) * rho)
+	case i == 0 && j == 1:
+		return 1 + (rho / 2)
+	case i == 1 && j == 0:
+		return 1 + (rho / 2)
+	case i == 1 && j == 1:
+		return 1 - rho
+	default:
+		return 1
+	}
+}

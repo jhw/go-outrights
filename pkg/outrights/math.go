@@ -7,39 +7,6 @@ import (
 
 // Mathematical utility functions
 
-// factorial calculates the factorial of n
-func factorial(n int) float64 {
-	if n <= 1 {
-		return 1
-	}
-	result := 1.0
-	for i := 2; i <= n; i++ {
-		result *= float64(i)
-	}
-	return result
-}
-
-// poissonProb calculates the Poisson probability for lambda and k
-func PoissonProb(lambda float64, k int) float64 {
-	return math.Pow(lambda, float64(k)) * math.Exp(-lambda) / factorial(k)
-}
-
-// dixonColesAdjustment applies Dixon-Coles adjustment for low-scoring games
-func DixonColesAdjustment(i, j int, rho float64) float64 {
-	switch {
-	case i == 0 && j == 0:
-		return 1 - (float64(i*j) * rho)
-	case i == 0 && j == 1:
-		return 1 + (rho / 2)
-	case i == 1 && j == 0:
-		return 1 + (rho / 2)
-	case i == 1 && j == 1:
-		return 1 - rho
-	default:
-		return 1
-	}
-}
-
 // rmsError calculates the root mean square error between two slices
 // 
 // Note: For match probabilities [home, draw, away], we include all three values
