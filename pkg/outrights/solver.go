@@ -400,3 +400,24 @@ func calculateTimePowerWeight(eventIndex, totalEvents int, power float64) float6
 	ratio := float64(eventIndex) / float64(totalEvents-1)
 	return math.Pow(ratio, power)
 }
+
+// rmsError calculates the root mean square error between two slices
+// 
+// Note: For match probabilities [home, draw, away], we include all three values
+// despite mathematical redundancy (away = 1 - home - draw). This gives team 
+// strength differences (home/away outcomes) double weight vs. draw probability
+// in the error calculation, which is appropriate since draws are harder to
+// predict and team ability should be the primary optimization target.
+func rmsError(x, y []float64) float64 {
+	if len(x) != len(y) {
+		return math.Inf(1)
+	}
+	
+	sum := 0.0
+	for i := range x {
+		diff := x[i] - y[i]
+		sum += diff * diff
+	}
+	
+	return math.Sqrt(sum / float64(len(x)))
+}
