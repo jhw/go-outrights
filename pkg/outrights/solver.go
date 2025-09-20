@@ -388,3 +388,15 @@ func extractMarketProbabilities(event Event) []float64 {
 	}
 	return probs
 }
+
+// calculateTimePowerWeight calculates time power weighting for events
+// Most recent event gets weight 1.0, oldest gets weight 0.0
+// Power controls the decay curve: 1.0 = linear, >1 = faster decay, <1 = slower decay
+func calculateTimePowerWeight(eventIndex, totalEvents int, power float64) float64 {
+	if totalEvents <= 1 {
+		return 1.0
+	}
+	// Convert index to ratio where 0 = oldest, 1 = newest
+	ratio := float64(eventIndex) / float64(totalEvents-1)
+	return math.Pow(ratio, power)
+}

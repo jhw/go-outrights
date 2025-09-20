@@ -105,17 +105,6 @@ func sumProduct(x, y []float64) float64 {
 	return sum
 }
 
-// calculateTimePowerWeight calculates time power weighting for events
-// Most recent event gets weight 1.0, oldest gets weight 0.0
-// Power controls the decay curve: 1.0 = linear, >1 = faster decay, <1 = slower decay
-func calculateTimePowerWeight(eventIndex, totalEvents int, power float64) float64 {
-	if totalEvents <= 1 {
-		return 1.0
-	}
-	// Convert index to ratio where 0 = oldest, 1 = newest
-	ratio := float64(eventIndex) / float64(totalEvents-1)
-	return math.Pow(ratio, power)
-}
 
 // NormalizeProbabilities converts betting prices to normalized probabilities
 // Takes prices (e.g., [2.0, 3.5, 2.8]) and returns probabilities that sum to 1.0
