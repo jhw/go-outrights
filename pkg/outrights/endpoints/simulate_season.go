@@ -196,7 +196,7 @@ func ProcessSimulation(req outrights.SimulationRequest, generations int, rounds 
 	ppgRatings := calcPPGRatings(teamNames, poissonRatings, homeAdvantage)
 	
 	// Calculate expected points from the actual simulation results (not deterministic calculation)
-	expectedPoints := simPoints.CalculateExpectedSeasonPoints()
+	expectedPoints := calculateExpectedSeasonPoints(simPoints)
 	
 	// Update league table with ratings and expected points
 	for i := range leagueTable {
@@ -276,4 +276,20 @@ func calcPPGRatings(teamNames []string, ratings map[string]float64, homeAdvantag
 	}
 	
 	return ppgRatings
+}
+
+// calculateExpectedSeasonPoints calculates expected season points from the actual simulation results
+func calculateExpectedSeasonPoints(simPoints *outrights.SimPoints) map[string]float64 {
+	teamNames, points, nPaths := simPoints.GetSimulationData()
+	expectedPoints := make(map[string]float64)
+	
+	for i, teamName := range teamNames {
+		totalPoints := 0.0
+		for path := 0; path < nPaths; path++ {
+			totalPoints += float64(points[i][path])
+		}
+		expectedPoints[teamName] = totalPoints / float64(nPaths)
+	}
+	
+	return expectedPoints
 }

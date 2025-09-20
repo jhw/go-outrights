@@ -200,17 +200,7 @@ func (sp *SimPoints) positionProbabilities(teamNames []string) map[string][]floa
 	return probabilities
 }
 
-// calculateExpectedSeasonPoints calculates expected season points from the actual simulation results
-func (sp *SimPoints) CalculateExpectedSeasonPoints() map[string]float64 {
-	expectedPoints := make(map[string]float64)
-	
-	for i, teamName := range sp.TeamNames {
-		totalPoints := 0.0
-		for path := 0; path < sp.NPaths; path++ {
-			totalPoints += float64(sp.Points[i][path])
-		}
-		expectedPoints[teamName] = totalPoints / float64(sp.NPaths)
-	}
-	
-	return expectedPoints
+// GetSimulationData returns the simulation data needed for external calculations
+func (sp *SimPoints) GetSimulationData() (teamNames []string, points [][]int, nPaths int) {
+	return sp.TeamNames, sp.Points, sp.NPaths
 }
