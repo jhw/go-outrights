@@ -379,3 +379,12 @@ func (rs *RatingsSolver) solve(events []Event, results []Result, ratings map[str
 	}
 }
 
+// extractMarketProbabilities converts event match odds to normalized probabilities
+func extractMarketProbabilities(event Event) []float64 {
+	probs, err := NormalizeProbabilities(event.MatchOdds.Prices)
+	if err != nil {
+		// Return zero probabilities on error (should not happen with valid data)
+		return make([]float64, len(event.MatchOdds.Prices))
+	}
+	return probs
+}

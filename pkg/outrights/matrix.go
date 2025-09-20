@@ -180,12 +180,4 @@ func (sm *ScoreMatrix) TotalGoals() [][2]interface{} {
 	return totals
 }
 
-func extractMarketProbabilities(event Event) []float64 {
-	probs, err := NormalizeProbabilities(event.MatchOdds.Prices)
-	if err != nil {
-		// Return zero probabilities on error (should not happen with valid data)
-		return make([]float64, len(event.MatchOdds.Prices))
-	}
-	return probs
-}
 
