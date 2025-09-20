@@ -121,3 +121,16 @@ func CalcAllFixtureOdds(teamNames []string, ratings map[string]float64, homeAdva
 	
 	return fixtureOdds
 }
+
+// sumProduct calculates the dot product of two float64 slices for market mark calculations
+func sumProduct(x, y []float64) float64 {
+	if len(x) != len(y) {
+		return 0
+	}
+	
+	sum := 0.0
+	for i := range x {
+		sum += x[i] * y[i]
+	}
+	return sum
+}
