@@ -45,9 +45,10 @@ func main() {
 		},
 	}
 
-	// Create solve-events request
+	// Create solve-events request with fixed home advantage
 	request := endpoints.SolveEventsRequest{
-		Matches: sampleMatches,
+		Matches:       sampleMatches,
+		HomeAdvantage: 0.3, // Fixed home advantage for all matches
 	}
 
 	log.Printf("Processing %d matches with solve-events workflow", len(request.Matches))
@@ -59,7 +60,7 @@ func main() {
 		log.Fatalf("Solve-events error: %v", err)
 	}
 
-	log.Printf("Solved lambdas for all matches. Average home advantage: %.4f", result.HomeAdvantage)
+	log.Printf("Solved lambdas for all matches. Home advantage: %.4f", result.HomeAdvantage)
 	log.Println()
 
 	// Display results for each match
